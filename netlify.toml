@@ -1,0 +1,33 @@
+# Netlify settings — used when the site is deployed from a Git repository.
+# (For drag-and-drop deploys this file is ignored and the folder is published as-is.)
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Always check for a fresh copy of the app, its manifest and the offline worker
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/manifest.*"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+# Images and sounds rarely change — let browsers keep them for a week
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+[[headers]]
+  for = "/sounds/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

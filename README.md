@@ -1,2 +1,97 @@
-# Prayer
-PrayerDisplay
+# Prayer Times
+
+A prayer-times display for **home** (phone, tablet, laptop) and **mosque** screens (wall TV or vertical screen). The whole app is `index.html`, with no install or build needed to run it.
+
+## How prayer times work
+
+- **Calculated on the device.** After the location is set, times are calculated in the browser, so they keep working **offline with no time limit**.
+- **AlAdhan as backup and check.**
+  - While online, the device compares its times with [AlAdhan](https://aladhan.com/prayer-times-api) about once a week. Small differences (≤ 5 min, usually Asr by 1 minute) are corrected automatically and remembered for offline use.
+  - AlAdhan is used directly when on-device calculation isn't possible: the *Moonsighting Committee* method, or "AlAdhan only" chosen in Settings. Three months are then saved for offline use.
+- **City lookup.** A city name is turned into coordinates and a time zone once, which needs internet. *Use my current location* and typed coordinates work immediately, even offline.
+- **Changing location while offline.** The previous location's times stay on screen, with a badge, until the new one can be looked up.
+- **"Now" rules.** Fajr is "now" until sunrise. Isha is "now" until Islamic midnight (half-way between sunset and sunrise).
+
+Settings → Location → **Compare with AlAdhan** shows both sets of times side by side.
+
+## Quick start (opening the file directly)
+
+1. Open `index.html` in Chrome, Edge, Firefox or Safari.
+2. Click once anywhere. Browsers only allow sound after one click.
+3. Settings (⚙ or `S`) → **Location**: enter your city, or press *Use my current location*. Then choose the method your mosque follows and press **Save**.
+
+## Deploying on Netlify
+
+**Option A: drag and drop.** Drag this folder onto Netlify.
+- Everything works, including offline start-up (`sw.js`).
+- The full-size originals in `images/` are uploaded too (~9 MB extra), but they're only used if a resized copy is missing.
+
+**Option B: from a Git repository (recommended).** Push this folder to GitHub and connect the repository in Netlify.
+- `netlify.toml` runs `npm run build`, which:
+  - rebuilds `manifest.json` / `manifest.js` from the `images/` and `sounds/` folders;
+  - creates resized copies of new images (`images/optimized`, `images/thumbs`) using the optional `sharp` package;
+  - publishes only what's needed into `dist/`, leaving the originals out.
+- You can run the same build locally with `node scripts/build.mjs`.
+
+Settings are stored per device and per site address. If you move from opening the file to the Netlify site, use Settings → Backup & Help → **Export**, then **Import** on the site.
+
+## Publishing new backgrounds and adhans to every screen
+
+1. On github.com, open the repository → `images/` or `sounds/` → **Add file → Upload files** → **Commit**.
+2. Netlify publishes the update in about a minute.
+3. Every screen checks for new content about every 3 hours, and at start-up.
+4. What each screen does with new items is set per device under Settings → Display → *When new backgrounds or adhans are published*:
+   - **Add to the list and let me know**: new items appear with a "New" badge.
+   - **Switch to the newest background automatically.**
+   - **Add quietly.**
+
+   Adhan sounds are never switched automatically.
+
+- File names become display names (`blue-mosque.jpg` → "Blue Mosque"). Edit `"name"` in `manifest.json` for a better title.
+- Recommended sizes: images up to ~3 MB (JPG), adhan audio up to ~10 MB (MP3).
+
+Files uploaded *inside Settings* stay on that device only. **Export** includes them, so one screen's full setup can be copied to another screen with **Import**.
+
+## Offline behaviour
+
+| Situation | What happens |
+|---|---|
+| Internet drops while open | Nothing changes: times are calculated on the device |
+| Browser or PC restarts with no internet | The page opens from the offline copy (Netlify / https only) |
+| New city entered while offline | Previous location's times stay, with a badge; the new city loads once online |
+| Very first start-up with no internet | Coordinates or *Use my location* work; a city name needs internet once |
+
+The device clock must be correct: without internet, Windows can't correct its time.
+
+## Home vs Mosque mode
+
+| | Home | Mosque / TV |
+|---|---|---|
+| Layout | Scrolls on phones and tablets; fills the screen on wide or full-screen displays | Always fills the screen; text sizes itself to the screen |
+| Iqama | Hidden by default | Shown, with an "Iqama in mm:ss" countdown |
+| At adhan | Adhan with a Stop bar, optional notification | Full-screen adhan display |
+| At Iqama | Optional chime | Optional "silence your phones" screen |
+| Screen | Optional keep-awake | Always awake; the pointer and buttons hide after 4 s idle |
+
+**Sound on an unattended mosque screen:** click once after each start-up, or launch the browser in kiosk mode:
+
+```
+chrome.exe --kiosk --autoplay-policy=no-user-gesture-required https://YOUR-SITE.netlify.app/
+```
+
+## Keyboard shortcuts
+
+`S` settings · `F` full screen · `Esc` stop the adhan / close the overlay
+
+## Files
+
+| File | Purpose |
+|---|---|
+| `index.html` | The whole app |
+| `sw.js` | Offline support (used on https / Netlify) |
+| `manifest.json` / `manifest.js` | List of backgrounds and sounds (generated) |
+| `scripts/build.mjs`, `package.json`, `netlify.toml` | Netlify build and caching settings |
+| `generate-manifest.ps1` | Windows alternative to the build: rebuilds the manifest and resized images locally |
+| `images/`, `images/optimized/`, `images/thumbs/` | Backgrounds (originals, TV-sized copies, previews) |
+| `sounds/` | Adhan audio |
+| `_backup/` | The original version, kept for reference |
