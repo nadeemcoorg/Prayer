@@ -1,7 +1,8 @@
 # Netlify settings — used when the site is deployed from a Git repository.
 # (For drag-and-drop deploys this file is ignored and the folder is published as-is.)
 [build]
-  command = "npm run build"
+  # Runs the build script; if it fails for any reason, the site is published as-is instead.
+  command = "node scripts/build.mjs || (echo 'Build script failed - publishing files as-is' && rm -rf dist && mkdir -p dist && cp -r index.html sw.js manifest.json manifest.js images sounds dist/)"
   publish = "dist"
 
 # Always check for a fresh copy of the app, its manifest and the offline worker

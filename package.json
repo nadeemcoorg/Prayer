@@ -6,8 +6,5 @@
   "description": "Prayer times display for home and mosque screens",
   "scripts": {
     "build": "node scripts/build.mjs"
-  },
-  "optionalDependencies": {
-    "sharp": "^0.33.5"
   }
 }
