@@ -60,6 +60,15 @@ try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,
  for(let t=asr-60000;t<asr+5*60000;t+=1000) T.checkAlerts({ms:t,key:'2026-10-02'});
  eq(T.firedKeys.filter(k=>k==='Asr|adhan').length,1,'adhan fires once per prayer');
  eq([T.settings.display.layout,T.settings.display.focus,T.settings.display.focusLayout,T.settings.display.night],['classic',false,'a','auto'],'layout defaults: Classic, Focus off (A), Night auto');
+ // ---- tests: board ----
+
+ // ---- tests: focus ----
+
+ // ---- tests: night ----
+
+ // ---- tests: split ----
+
+ // ---- tests: sunpath ----
  // Sun path geometry
  { const d=sc('2026-10-05').today, G=T.sunGeom(d,T.settings); const sr=d.events.find(e=>e.key==='Sunrise'), mg=d.events.find(e=>e.key==='Maghrib');
    const p0=G.pt(sr.adhan), p1=G.pt(mg.adhan), pm=G.pt((sr.adhan+mg.adhan)/2);
@@ -67,6 +76,7 @@ try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,
    const nz=JSON.parse(JSON.stringify(T.settings)); nz.display.zawal=false; const nm2=JSON.parse(JSON.stringify(T.settings)); nm2.display.makruh=false;
    eq([G.mk.length,T.sunGeom(d,nz).mk.length,T.sunGeom(d,nm2).mk.length],[3,2,0],'Sun path: three Makruh windows (two without Zawal, none when Makruh is off)'); }
  try{ T.settings.display.layout='sunpath'; T.applyVisual(T.settings); T.tick(); eq(true,true,'Sun path layout builds'); }catch(e){ eq(e.message,null,'Sun path layout builds'); } finally{ T.settings.display.layout='classic'; T.applyVisual(T.settings); T.tick(); }
+
  // feedback
  T.logError('audio','NotAllowedError: play() failed'); T.logError('audio','NotAllowedError: play() failed');
  const dg=T.diagnostics(); eq(/App 2\.4\.0/.test(dg) && /London/.test(dg) && /\[audio\].*\(x2\)/.test(dg) && !/51\.5074/.test(dg),true,'diagnostics: version, city, de-duplicated errors, no exact GPS');
