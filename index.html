@@ -261,6 +261,48 @@ html.mosque.idle .tb-actions{opacity:0; pointer-events:none}
 /* ---- layout: sunpath ---- */
 
 /* ---- focus mode ---- */
+/* Mosque only, from the adhan until the Iqama. The other times shrink to one line at the bottom. */
+html.fill.auto-focus .main{grid-template-rows:1fr auto}
+html.fill.auto-focus .prayers{display:flex !important; align-content:center; align-self:end; flex-wrap:wrap; justify-content:center; gap:.4rem 2.2rem; padding:.7rem 1rem; background:none; border:0; border-top:1px solid var(--panel-border); border-radius:0; box-shadow:none}
+html.fill.auto-focus .p-head, html.fill.auto-focus .p-row.sunrise, html.fill.auto-focus .p-row.jumuah-info, html.fill.auto-focus .p-ar, html.fill.auto-focus .p-iqama, html.fill.auto-focus .p-sub, html.fill.auto-focus .p-badge{display:none !important}
+html.fill.auto-focus .p-row{display:flex !important; flex-direction:row; align-items:baseline; gap:.5rem; padding:0; background:none !important; border:0; box-shadow:none !important; opacity:1; animation:none}
+html.fill.auto-focus .p-label{flex-direction:row}
+html.fill.auto-focus .p-name{font-size:1.05rem !important; font-weight:600; color:var(--muted)}
+html.fill.auto-focus .p-adhan{font-size:1.25rem !important; margin:0}
+html.fill.auto-focus .p-name::after{content:none !important}
+html.fill.auto-focus .p-row.current .p-adhan, html.fill.auto-focus .p-row.current .p-name{color:var(--warn)}
+html.fill.auto-focus .next-panel{align-items:center; text-align:center}
+html.fill.auto-focus .np-title{justify-content:center}
+html.fill.auto-focus .next-panel .progress{width:70%}
+/* 4A: clock and countdown side by side, same size */
+html.fill.auto-focus.focus-a .main{grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-areas:"hero next" "prayers prayers"}
+html.fill.auto-focus.focus-a .clock{font-size:7rem}
+html.fill.auto-focus.focus-a .np-count{font-size:7rem; white-space:nowrap}
+html.fill.portrait.auto-focus.focus-a .clock, html.fill.portrait.auto-focus.focus-a .np-count{font-size:9rem}
+html.fill.auto-focus.focus-a .np-name{font-size:2.4rem}
+html.fill.portrait.auto-focus.focus-a .main{grid-template-columns:minmax(0,1fr); grid-template-rows:1fr 1fr auto; grid-template-areas:"hero" "next" "prayers"}
+/* 4B: clock first, the countdown in one band under it */
+html.fill.auto-focus.focus-b .main{grid-template-columns:1fr; grid-template-rows:1fr auto auto; grid-template-areas:"hero" "next" "prayers"}
+html.fill.auto-focus.focus-b .hero{background:none; border:0; box-shadow:none}
+html.fill.auto-focus.focus-b .clock{font-size:12rem}
+html.fill.portrait.auto-focus.focus-b .clock{font-size:9rem}
+html.fill.portrait.auto-focus.focus-b .main{grid-template-rows:1fr auto auto}
+html.fill.auto-focus.focus-b .next-panel{flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:baseline; gap:.3rem 2rem; padding-block:.8rem; border-color:var(--accent); box-shadow:inset 0 0 0 2px var(--accent)}
+html.fill.auto-focus.focus-b .next-panel .progress{display:none}
+html.fill.auto-focus.focus-b .np-count{font-size:4.2rem; margin:0}
+/* 4C: countdown only, the clock small at the top */
+html.fill.auto-focus.focus-c .main{grid-template-columns:1fr; grid-template-rows:1fr auto; grid-template-areas:"next" "prayers"}
+html.fill.auto-focus.focus-c .hero{position:fixed; top:2.2vmin; left:50%; transform:translateX(-50%); padding:.3rem 1.2rem; z-index:2}
+html.fill.auto-focus.focus-c .hero .dates{display:none}
+html.fill.auto-focus.focus-c .clock{font-size:2.6rem}
+html.fill.auto-focus.focus-c .next-panel{background:none; border:0; box-shadow:none}
+html.fill.auto-focus.focus-c .np-name{font-size:3.6rem}
+html.fill.auto-focus.focus-c .np-ar{font-size:3rem}
+html.fill.auto-focus.focus-c .np-count{font-size:14rem; line-height:.95}
+html.fill.portrait.auto-focus.focus-c .main{grid-template-rows:auto 1fr auto; grid-template-areas:"hero" "next" "prayers"}
+html.fill.portrait.auto-focus.focus-c .hero{position:static; transform:none; justify-self:center}
+html.fill.portrait.auto-focus.focus-c .np-count{font-size:10rem}
+
 
 /* ---- night mode ---- */
 
@@ -713,6 +755,15 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
           </select>
           <p class="hint">Used in both Home and Mosque mode.</p></div>
         <!-- focus settings -->
+        <div data-show="display.mode=mosque">
+          <label class="sw"><input type="checkbox" data-k="display.focus"><span class="track"></span><span class="txt">Focus mode from Adhan to Iqama<small>After the adhan screen closes, the screen switches to a large, simple view until the Iqama, then returns to the layout above.</small></span></label>
+          <div class="field" data-show="display.focus=true"><label for="fFocus">Focus layout</label>
+            <select class="sel" id="fFocus" data-k="display.focusLayout">
+              <option value="a">A: clock and countdown side by side</option>
+              <option value="b">B: large clock with the countdown underneath</option>
+              <option value="c">C: countdown only, small clock</option>
+            </select></div>
+        </div>
         <!-- night settings -->
       </section>
       <section class="card">
@@ -1642,7 +1693,9 @@ function prayerState(nowMs, sc) {
 /* ------------------------------------------------- automatic views (pure) */
 /** Focus layout to show at `nowMs` ('a' | 'b' | 'c'), or null. Mosque mode only; see the focus-mode branch. */
 function focusAt(nowMs, sc, s = V) {
-  return null;
+  if (s.display.mode !== 'mosque' || !s.display.focus || !sc.today) return null;
+  const on = sc.today.events.some(e => !e.sunrise && e.iqama != null && e.iqama > e.adhan && nowMs >= e.adhan && nowMs < e.iqama);
+  return on ? s.display.focusLayout : null;
 }
 /** Whether the Night view is on at `nowMs`; see the night-mode branch. */
 function nightAt(nowMs, sc, s = V) {
