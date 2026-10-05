@@ -1,7 +1,7 @@
 # Prayer Times — Project Handover
 
 > **For a new Claude session / new developer:** read this file first, then `README.md`.
-> Repository: **`nadeemcoorg/prayer`** on GitHub (default branch `main`, deployed by Netlify).
+> Repository: **`nadeemcoorg/Prayer`** on GitHub (default branch `main`, deployed by Netlify).
 > It records what the app is, how it is built, every revision so far, the decisions the owner made (and why), and what is still open.
 > Last updated: **2026-10-05** · Current version: **2.3.1** · Owner: Nadeem Ahmad (GitHub: `nadeemcoorg`)
 
@@ -220,7 +220,7 @@ A single `Index.html` with major bugs found in the first review:
 
 ## 9. How to continue in a new session
 
-1. Start a Claude Code session on the GitHub repository `nadeemcoorg/prayer`.
+1. Start a Claude Code session on the GitHub repository `nadeemcoorg/Prayer`.
 2. Ask Claude: *"Read HANDOVER.md and README.md, run `node tests/smoke.test.cjs`, then continue with item N from section 8."*
 3. After changes:
    - re-run the tests;
