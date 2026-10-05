@@ -123,3 +123,5 @@ chrome.exe --kiosk --autoplay-policy=no-user-gesture-required https://YOUR-SITE.
 | `images/`, `images/optimized/`, `images/thumbs/` | Backgrounds (originals, TV-sized copies, previews) |
 | `sounds/` | Adhan audio |
 | `_backup/` | The original version, kept for reference |
+| `HANDOVER.md` | Project history, decisions and open items — read first when continuing development |
+| `tests/` | Automated test (`node tests/smoke.test.cjs`) and visual preview tool |
