@@ -1,0 +1,53 @@
+# Resizes new backgrounds uploaded to images/ and commits the copies back to the repository.
+#   images/optimized/  ≤ 2560 px (used by the app)
+#   images/thumbs/     400 px   (Settings picker)
+# It also refreshes manifest.json / manifest.js. Netlify then deploys the commit automatically.
+# Same result as running generate-manifest.ps1 on Windows, but nothing has to be done by hand.
+name: Resize new images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'images/**'
+      - '!images/optimized/**'
+      - '!images/thumbs/**'
+  workflow_dispatch:   # can also be run by hand: Actions → Resize new images → Run workflow
+
+permissions:
+  contents: write
+
+concurrency:
+  group: resize-images
+  cancel-in-progress: false
+
+jobs:
+  resize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # sharp is installed only here, so the Netlify build stays dependency-free
+      - name: Install sharp
+        run: npm install --no-save --no-audit --no-fund sharp
+
+      - name: Resize images and rebuild the manifest
+        run: node scripts/build.mjs
+
+      - name: Commit resized copies
+        run: |
+          git add images/optimized images/thumbs
+          if git diff --cached --quiet; then
+            echo "No new images to resize."
+            exit 0
+          fi
+          git add manifest.json manifest.js
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Resize new images (automatic)"
+          git pull --rebase origin main
+          git push

@@ -1,8 +1,9 @@
 # Prayer Times — Project Handover
 
 > **For a new Claude session / new developer:** read this file first, then `README.md`.
+> Repository: **`nadeemcoorg/prayer`** on GitHub (default branch `main`, deployed by Netlify).
 > It records what the app is, how it is built, every revision so far, the decisions the owner made (and why), and what is still open.
-> Last updated: **2026-10-05** · Current version: **2.3.0** · Owner: Nadeem Ahmad (GitHub: `nadeemcoorg`)
+> Last updated: **2026-10-05** · Current version: **2.3.1** · Owner: Nadeem Ahmad (GitHub: `nadeemcoorg`)
 
 ---
 
@@ -45,10 +46,11 @@ No user accounts, no backend server. Everything runs in the browser; settings ar
 | `sw.js` | Service worker: offline start-up, caches the page, manifest, sounds and previews |
 | `app.webmanifest`, `icons/` | PWA "Add to Home Screen": name, colours, icons (192, 512, maskable, apple-touch, favicon) |
 | `manifest.json` / `manifest.js` | **Asset list** (backgrounds and sounds). `manifest.js` makes it work on file://. Generated; edit `"name"` values freely |
-| `scripts/build.mjs` | Netlify build (no dependencies): regenerates the manifest, copies only the needed files into `dist/` |
+| `scripts/build.mjs` | Netlify build (no dependencies): regenerates the manifest, copies only the needed files into `dist/`. Resizes images too when `sharp` is available |
+| `.github/workflows/resize-images.yml` | GitHub Action: on a push to `main` that touches `images/`, installs `sharp`, runs the build script and commits the new `optimized/` + `thumbs/` copies and manifest |
 | `netlify.toml` | Build command (with a safety fallback), publish `dist`, cache headers |
 | `package.json` | Only a `build` script, **no dependencies** (on purpose, see revision 2.1.1) |
-| `generate-manifest.ps1` | Windows alternative to the build: rebuilds the manifest and resized images locally |
+| `generate-manifest.ps1` | Windows alternative: rebuilds the manifest and resized images locally (no longer required; the GitHub Action does it) |
 | `images/` | Original backgrounds (large, up to 6000 px) |
 | `images/optimized/` | 2560 px copies (used by the app) |
 | `images/thumbs/` | 400 px previews (Settings picker) |
@@ -156,13 +158,17 @@ A single `Index.html` with major bugs found in the first review:
 - **Hijri month bug:** some phone browsers return Gregorian month names, so "24 Rabiʻ II" showed as "24 April". The app now uses its own month tables (English + Arabic: ٢٤ ربيع الآخر ١٤٤٨ هـ), with a tabular Hijri fallback if the browser lacks the Umm al-Qura calendar.
 - **PWA:** `app.webmanifest`, icons, an install banner (Android/Chrome), an iPhone tip, and a Settings → Backup & Help install section.
 
-### v2.3.0: feedback and error log (current)
+### v2.3.0: feedback and error log
 - Settings → **Feedback** tab:
   - type, message and optional email;
   - "Include diagnostics" with a preview of exactly what will be sent (city only, never exact GPS);
   - rate limit of 5 per day; honeypot spam trap; offline outbox.
 - On-device error log (script errors, failed lookups, blocked audio, geolocation and offline-support failures).
 - "Report a problem" button on the error screen.
+
+### v2.3.1: automatic image resizing, docs refresh (current)
+- New GitHub Action **Resize new images** (`.github/workflows/resize-images.yml`): images uploaded to `images/` through GitHub are resized and committed back automatically, then Netlify redeploys. `sharp` is installed only inside the Action, so the Netlify build stays dependency-free (the v2.1.1 decision holds).
+- README and HANDOVER brought up to date: resizing, the repository instead of a local folder, the Moonsighting Committee offline limit.
 
 ---
 
@@ -184,17 +190,19 @@ A single `Index.html` with major bugs found in the first review:
 - The device clock must be correct; offline, it can't be corrected.
 - iPhone: no install button is possible (Apple policy). The user is shown the Share → Add to Home Screen tip.
 - AlAdhan uses UTC+0 for Casablanca, while Morocco is officially on UTC+1. Calibration ignores differences over 5 minutes, so on-device times follow the device's time-zone data.
-- Moonsighting Committee method (15) always uses AlAdhan (seasonal rules not implemented on-device).
-- Netlify resizing of newly uploaded images is off (no `sharp`).
+- Moonsighting Committee method (15) always uses AlAdhan (seasonal rules not implemented on-device), so offline it only works for the 3 saved months.
+- Netlify itself doesn't resize images; the GitHub Action does, a minute or two after the upload. Replacing an image under the same file name needs its old `optimized/` and `thumbs/` copies deleted.
+- Images added by drag-and-drop deploy (not through GitHub) aren't resized; use `generate-manifest.ps1` first.
 
 ---
 
 ## 8. Open items and next steps
 
 1. **Deployment status to confirm:**
-   - all v2.2/2.3 files uploaded to GitHub (including `icons/`, `app.webmanifest`, `tests/`, `HANDOVER.md`);
-   - the Netlify build shows `✓ dist/ ready`;
-   - Netlify → Forms → *Enable form detection*, then *Submission notifications → Email* for the `feedback` form.
+   - ~~all v2.2/2.3 files uploaded to GitHub~~: done (checked 2026-10-05);
+   - the Netlify build shows `✓ dist/ ready` (the build runs cleanly locally);
+   - Netlify → Forms → *Enable form detection*, then *Submission notifications → Email* for the `feedback` form;
+   - after the first image upload, check the repository's **Actions** tab shows *Resize new images* succeeding (needs Settings → Actions → General → *Workflow permissions: Read and write* if the push step is refused).
 2. **Layouts:** six sketches were shown (1 Classic, 2 Mosque board, 3 Split, 4 Focus, 5 Sun path, 6 Night). **Waiting for the owner's go signal and choice.**
    - Plan: CSS-only layout themes on the same page (~2–5 KB each, no performance cost), a picker with previews, separate defaults for Home and Mosque.
    - Suggested first: Mosque board and Focus.
@@ -212,10 +220,10 @@ A single `Index.html` with major bugs found in the first review:
 
 ## 9. How to continue in a new session
 
-1. Connect the folder `C:\WorkSpace\PrayerReminder\Source`.
+1. Start a Claude Code session on the GitHub repository `nadeemcoorg/prayer`.
 2. Ask Claude: *"Read HANDOVER.md and README.md, run `node tests/smoke.test.cjs`, then continue with item N from section 8."*
 3. After changes:
    - re-run the tests;
    - bump the version (`APP_VERSION` in `index.html`, `VERSION` in `sw.js`, `package.json`);
    - add a line to section 5;
-   - upload the changed files to GitHub.
+   - commit and push to a branch, then merge into `main` (Netlify deploys `main`).
