@@ -22,7 +22,7 @@ const ctx={console:{log(){},info(){},warn(){},error:(...a)=>errors.push(a.join('
 ctx.window=ctx; vm.createContext(ctx);
 process.on('unhandledRejection',e=>errors.push('UNHANDLED '+(e&&e.stack||e)));
 mem['pr.settings.v2']=JSON.stringify({configured:true,location:{mode:'city',city:'London',country:'United Kingdom'},display:{mode:'home'}});
-try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,hideOverlay,schedule,wallNow,currentTz,prayerState,makruhAt,hijriOf,checkAlerts,installState,diagnostics,logError,flushOutbox,postFeedback,get firedKeys(){return fired.keys},resetFired(){fired={day:'',keys:[]}},get settings(){return settings},applyVisual,onAdhan,onIqama,onReminder,refreshManifest,compareWithAladhan,sourceInfo};`,ctx);}catch(e){errors.push('SYNC '+e.stack)}
+try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,hideOverlay,schedule,wallNow,currentTz,prayerState,makruhAt,focusAt,nightAt,hijriOf,checkAlerts,installState,diagnostics,logError,flushOutbox,postFeedback,get firedKeys(){return fired.keys},resetFired(){fired={day:'',keys:[]}},get settings(){return settings},applyVisual,onAdhan,onIqama,onReminder,refreshManifest,compareWithAladhan,sourceInfo};`,ctx);}catch(e){errors.push('SYNC '+e.stack)}
 (async()=>{
  for(let i=0;i<5;i++) await new Promise(r=>setImmediate(r));
  const T=ctx.__T; let ok=0,bad=0; const eq=(a,b,m)=>{const p=JSON.stringify(a)===JSON.stringify(b);p?ok++:bad++;console.log((p?'PASS ':'FAIL ')+m+(p?'':`  got ${JSON.stringify(a)} exp ${JSON.stringify(b)}`))};
@@ -59,6 +59,7 @@ try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,
  T.resetFired(); const asr=sc('2026-10-02').today.events.find(e=>e.key==='Asr').adhan;
  for(let t=asr-60000;t<asr+5*60000;t+=1000) T.checkAlerts({ms:t,key:'2026-10-02'});
  eq(T.firedKeys.filter(k=>k==='Asr|adhan').length,1,'adhan fires once per prayer');
+ eq([T.settings.display.layout,T.settings.display.focus,T.settings.display.focusLayout,T.settings.display.night],['classic',false,'a','auto'],'layout defaults: Classic, Focus off (A), Night auto');
  // feedback
  T.logError('audio','NotAllowedError: play() failed'); T.logError('audio','NotAllowedError: play() failed');
  const dg=T.diagnostics(); eq(/App 2\.4\.0/.test(dg) && /London/.test(dg) && /\[audio\].*\(x2\)/.test(dg) && !/51\.5074/.test(dg),true,'diagnostics: version, city, de-duplicated errors, no exact GPS');

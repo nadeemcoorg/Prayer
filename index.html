@@ -248,6 +248,22 @@ html.fill.portrait.h12 .p-iqama{font-size:1.8rem}
 html.mosque.idle, html.mosque.idle *{cursor:none !important}
 html.mosque.idle .tb-actions{opacity:0; pointer-events:none}
 
+/* ==========================================================================
+   Layout themes (Settings → Display → Layout) and automatic views.
+   html gets one "lay-*" class (lay-classic is the original layout, no extra rules),
+   plus "auto-focus focus-a|b|c" (Mosque, Adhan → Iqama) and "night" (after Isha's Iqama → Fajr adhan).
+   Each feature keeps its rules in its own block below.
+   ========================================================================== */
+/* ---- layout: board ---- */
+
+/* ---- layout: split ---- */
+
+/* ---- layout: sunpath ---- */
+
+/* ---- focus mode ---- */
+
+/* ---- night mode ---- */
+
 /* ---------- Floating UI ---------- */
 .toasts{position:fixed; top:max(12px, env(safe-area-inset-top)); left:50%; transform:translateX(-50%); z-index:60; display:flex; flex-direction:column; gap:8px;
   width:min(92vw, 420px); pointer-events:none; font-size:15px}
@@ -686,6 +702,19 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
 
     <!-- DISPLAY -->
     <div class="s-panel" role="tabpanel" id="pan-display" aria-labelledby="tab-display" hidden>
+      <section class="card" id="layoutCard">
+        <h3>Layout</h3>
+        <div class="field"><label for="fLayout">Screen layout</label>
+          <select class="sel" id="fLayout" data-k="display.layout">
+            <option value="classic">Classic: clock, next prayer and a row of prayer cards</option>
+            <!-- layout option: board -->
+            <!-- layout option: split -->
+            <!-- layout option: sunpath -->
+          </select>
+          <p class="hint">Used in both Home and Mosque mode.</p></div>
+        <!-- focus settings -->
+        <!-- night settings -->
+      </section>
       <section class="card">
         <h3>Mode</h3>
         <div class="seg" role="radiogroup" aria-label="Display mode" style="margin-top:8px">
@@ -849,6 +878,7 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
    ========================================================================== */
 const APP_VERSION = '2.4.0';
 const PRAYERS = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+const LAYOUTS = ['classic', 'board', 'split', 'sunpath'];
 const SALAH = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 const LABEL = { Fajr: 'Fajr', Sunrise: 'Sunrise', Ishraq: 'Ishraq', Dhuhr: 'Dhuhr', Jumuah: "Jumu'ah", Asr: 'Asr', Maghrib: 'Maghrib', Isha: 'Isha' };
 const AR = { Fajr: 'الفجر', Sunrise: 'طلوع', Ishraq: 'الشروق', Dhuhr: 'الظهر', Jumuah: 'الجمعة', Asr: 'العصر', Maghrib: 'المغرب', Isha: 'العشاء' };
@@ -893,6 +923,9 @@ const DEFAULTS = {
     mode: 'home', orientation: 'auto', title: '', announcements: '', keepAwake: false,
     clock24: true, showSeconds: true, showHijri: true, showArabic: true, showSunrise: true, showIqama: 'auto', makruh: true, makruhMin: 20,
     zawal: true, zawalMin: 10, zawalSkipFriday: false,   // Hanafi default: Zawal is Makruh every day, Friday included
+    layout: 'classic',                                   // classic | board | split | sunpath
+    focus: false, focusLayout: 'a',                      // Mosque only: Focus view from Adhan until Iqama (a | b | c)
+    night: 'auto',                                       // Night view after Isha's Iqama until Fajr adhan: auto (Mosque only) | on | off
     background: '', newContent: 'list', dim: 35, panelColor: '#0b1220', panelOpacity: 55, accent: '#7ee0a1', textScale: 100, iqamaScreen: 2
   }
 };
@@ -1024,6 +1057,9 @@ function loadSettings() {
   if (!['auto', 'aladhan'].includes(s.source)) s.source = 'auto';
   s.display.makruhMin = Math.min(60, Math.max(5, Math.round(+s.display.makruhMin || 20)));
   s.display.zawalMin = Math.min(30, Math.max(3, Math.round(+s.display.zawalMin || 10)));
+  if (!LAYOUTS.includes(s.display.layout)) s.display.layout = 'classic';
+  if (!['a', 'b', 'c'].includes(s.display.focusLayout)) s.display.focusLayout = 'a';
+  if (!['auto', 'on', 'off'].includes(s.display.night)) s.display.night = 'auto';
   return s;
 }
 /** Bring settings over from the original version (key "prayerSettings"). */
@@ -1444,6 +1480,7 @@ function updateLayoutClasses(s = V) {
   R.classList.toggle('fill', fill);
   R.classList.toggle('portrait', portrait);
   R.classList.toggle('list-mode', fill ? portrait : w < 600);
+  for (const l of LAYOUTS) R.classList.toggle('lay-' + l, D.layout === l);
 }
 
 let bgReq = 0, bgSig = null;
@@ -1601,13 +1638,30 @@ function prayerState(nowMs, sc) {
   return { salah, next, tomorrow, current, sunriseEv, afterSunrise, yMid };
 }
 
+/* ------------------------------------------------- automatic views (pure) */
+/** Focus layout to show at `nowMs` ('a' | 'b' | 'c'), or null. Mosque mode only; see the focus-mode branch. */
+function focusAt(nowMs, sc, s = V) {
+  return null;
+}
+/** Whether the Night view is on at `nowMs`; see the night-mode branch. */
+function nightAt(nowMs, sc, s = V) {
+  return false;
+}
+let autoSig = '';
+function applyAuto(focus, night) {
+  const sig = `${focus}|${night}`; if (sig === autoSig) return; autoSig = sig;
+  R.classList.toggle('auto-focus', !!focus);
+  for (const k of ['a', 'b', 'c']) R.classList.toggle('focus-' + k, focus === k);
+  R.classList.toggle('night', !!night);
+}
+
 /* ------------------------------------------------------------- main loop */
 function tick() {
   const now = wallNow(currentTz());
   if (now.key !== lastKey) { lastKey = now.key; ensureData(); rowsSig = ''; }
   renderClock(now);
   const sc = schedule(now.key, V);
-  if (!sc.today) { renderHijri(null); renderEmpty(); overlayTick(now); return; }
+  if (!sc.today) { renderHijri(null); renderEmpty(); applyAuto(null, false); overlayTick(now); return; }
   renderHijri(sc.today);
 
   const sig = `${now.key}|${version}|${R.classList.contains('show-iqama')}|${V.display.showSunrise}|${V.display.clock24}|${V.display.makruhMin}`;
@@ -1615,6 +1669,7 @@ function tick() {
 
   const { next, tomorrow, current, sunriseEv, afterSunrise, yMid } = prayerState(now.ms, sc);
   const mk = makruhAt(now.ms, sc);
+  applyAuto(ov ? null : focusAt(now.ms, sc), nightAt(now.ms, sc));   // Focus waits until the adhan screen closes
 
   // Row states
   for (const li of $$('#prayers .p-row')) {
