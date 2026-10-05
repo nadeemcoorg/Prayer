@@ -60,6 +60,11 @@ try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,
  for(let t=asr-60000;t<asr+5*60000;t+=1000) T.checkAlerts({ms:t,key:'2026-10-02'});
  eq(T.firedKeys.filter(k=>k==='Asr|adhan').length,1,'adhan fires once per prayer');
  eq([T.settings.display.layout,T.settings.display.focus,T.settings.display.focusLayout,T.settings.display.night],['classic',false,'a','auto'],'layout defaults: Classic, Focus off (A), Night auto');
+ // ---- tests: board ----
+
+ // ---- tests: focus ----
+
+ // ---- tests: night ----
  // Night view (after Isha's Iqama until the Fajr adhan). Default 'auto' = Mosque screens only
  const nm=JSON.parse(JSON.stringify(T.settings)); nm.display.mode='mosque';
  const ishaE=sc('2026-10-02').today.events.find(e=>e.key==='Isha'), fajrE=sc('2026-10-03').today.events.find(e=>e.key==='Fajr');
@@ -68,6 +73,11 @@ try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,
    [false,true,true,true,false],'Night: on from Isha Iqama, through midnight, off at Fajr adhan');
  const nh=JSON.parse(JSON.stringify(nm)); nh.display.mode='home'; const nho=JSON.parse(JSON.stringify(nh)); nho.display.night='on'; const nmo=JSON.parse(JSON.stringify(nm)); nmo.display.night='off';
  eq([na(at('2026-10-03','01:00'),'2026-10-03',nh),na(at('2026-10-03','01:00'),'2026-10-03',nho),na(at('2026-10-03','01:00'),'2026-10-03',nmo)],[false,true,false],"Night: 'auto' is Mosque only; 'on' works at Home; 'off' turns it off");
+
+ // ---- tests: split ----
+
+ // ---- tests: sunpath ----
+
  // feedback
  T.logError('audio','NotAllowedError: play() failed'); T.logError('audio','NotAllowedError: play() failed');
  const dg=T.diagnostics(); eq(/App 2\.4\.0/.test(dg) && /London/.test(dg) && /\[audio\].*\(x2\)/.test(dg) && !/51\.5074/.test(dg),true,'diagnostics: version, city, de-duplicated errors, no exact GPS');
