@@ -60,7 +60,17 @@ try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,
  for(let t=asr-60000;t<asr+5*60000;t+=1000) T.checkAlerts({ms:t,key:'2026-10-02'});
  eq(T.firedKeys.filter(k=>k==='Asr|adhan').length,1,'adhan fires once per prayer');
  eq([T.settings.display.layout,T.settings.display.focus,T.settings.display.focusLayout,T.settings.display.night],['classic',false,'a','auto'],'layout defaults: Classic, Focus off (A), Night auto');
+ // ---- tests: board ----
  try{ T.settings.display.layout='board'; T.applyVisual(T.settings); T.tick(); eq(true,true,'Mosque board layout builds (with Jumu\'ah row)'); }catch(e){ eq(e.message,null,'Mosque board layout builds'); } finally{ T.settings.display.layout='classic'; T.applyVisual(T.settings); T.tick(); }
+
+ // ---- tests: focus ----
+
+ // ---- tests: night ----
+
+ // ---- tests: split ----
+
+ // ---- tests: sunpath ----
+
  // feedback
  T.logError('audio','NotAllowedError: play() failed'); T.logError('audio','NotAllowedError: play() failed');
  const dg=T.diagnostics(); eq(/App 2\.4\.0/.test(dg) && /London/.test(dg) && /\[audio\].*\(x2\)/.test(dg) && !/51\.5074/.test(dg),true,'diagnostics: version, city, de-duplicated errors, no exact GPS');
