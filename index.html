@@ -255,6 +255,35 @@ html.mosque.idle .tb-actions{opacity:0; pointer-events:none}
    Each feature keeps its rules in its own block below.
    ========================================================================== */
 /* ---- layout: board ---- */
+/* Mosque board: the printed-timetable look. Table on the left, clock and countdown on the right. */
+html.lay-board .p-iqama{color:var(--accent)}
+html.lay-board .p-row.jumuah-info{opacity:1; background:none; border-top:1px dashed var(--panel-border); border-radius:0}
+html.lay-board .p-row.jumuah-info .p-name, html.lay-board .p-row.jumuah-info .p-adhan, html.lay-board .p-row.jumuah-info .p-iqama{color:var(--warn)}
+html.lay-board .p-row.jumuah-info .p-sub{white-space:normal}
+html.fill.lay-board .main{grid-template-columns:1.6fr 1fr; grid-template-rows:auto 1fr; grid-template-areas:"prayers hero" "prayers next"}
+html.fill.lay-board .prayers{grid-template-rows:auto; grid-auto-rows:1fr; align-content:stretch; padding:.5rem .9rem; gap:.3rem}
+html.fill.lay-board .p-head{grid-template-columns:1fr 7rem 7rem; font-size:.7rem; align-self:end; padding-block:0}
+html.fill.lay-board:not(.show-iqama) .p-head{grid-template-columns:1fr 7rem}
+html.fill.lay-board .p-row{grid-template-columns:1fr 7rem 7rem; padding:.15rem 1rem; border-radius:.6rem; min-height:0}
+html.fill.lay-board:not(.show-iqama) .p-row{grid-template-columns:1fr 7rem}
+html.fill.lay-board .p-label{flex-wrap:nowrap; min-width:0; overflow:hidden}
+html.fill.lay-board .p-name{font-size:1.45rem}
+html.fill.lay-board .p-ar{font-size:1.25rem}
+html.fill.lay-board .p-sub{font-size:.8rem}
+html.fill.lay-board .p-adhan{font-size:1.9rem}
+html.fill.lay-board .p-iqama{font-size:1.8rem; color:var(--accent)}
+html.fill.lay-board .p-row.sunrise .p-adhan{font-size:1.5rem}
+html.fill.lay-board.h12 .p-adhan{font-size:1.6rem} html.fill.lay-board.h12 .p-iqama{font-size:1.5rem}
+html.fill.lay-board .p-row.next{box-shadow:inset .3rem 0 0 var(--accent)}
+html.fill.lay-board .clock{font-size:4.6rem}
+html.fill.lay-board .dates{flex-direction:column; align-items:center; gap:.15rem; font-size:.9rem}
+html.fill.lay-board .next-panel{align-items:center; text-align:center}
+html.fill.lay-board .np-title{justify-content:center}
+html.fill.lay-board .np-count{font-size:3.6rem}
+html.fill.lay-board .next-panel .progress{width:80%}
+html.fill.lay-board.portrait .main{grid-template-columns:1fr 1fr; grid-template-rows:auto 1fr; grid-template-areas:"hero next" "prayers prayers"}
+html.fill.lay-board.portrait .clock{font-size:5rem}
+
 
 /* ---- layout: split ---- */
 
@@ -708,6 +737,7 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
           <select class="sel" id="fLayout" data-k="display.layout">
             <option value="classic">Classic: clock, next prayer and a row of prayer cards</option>
             <!-- layout option: board -->
+            <option value="board">Mosque board: timetable with Adhan and Iqama columns</option>
             <!-- layout option: split -->
             <!-- layout option: sunpath -->
           </select>
@@ -1560,6 +1590,20 @@ function buildRows(day) {
     }
     ul.append(li);
   }
+  if (V.display.layout === 'board' && day && !day.fri && V.jumuah.enabled) { const j = jumuahRow(day.key); if (j) ul.append(j); }
+}
+/** Mosque board: a Jumu'ah row on every day, with the coming Friday's times. */
+function jumuahRow(key) {
+  const base = baseOf(key); const toFri = (5 - new Date(base).getUTCDay() + 7) % 7 || 7;
+  const fri = dayEvents(keyOf(base + toFri * DAY), V); if (!fri) return null;
+  const e = fri.events.find(x => x.key === 'Dhuhr'); if (!e) return null;
+  const li = el('li', { class: 'p-row jumuah-info', 'data-key': 'Jumuah' },
+    el('div', { class: 'p-label' }, el('span', { class: 'p-name', text: LABEL.Jumuah }), el('span', { class: 'p-ar ar', lang: 'ar', text: AR.Jumuah })),
+    el('div', { class: 'p-adhan num' }), el('div', { class: 'p-iqama num' }), el('span', { class: 'p-badge' }));
+  setTime($('.p-adhan', li), e.adhan, V.display.clock24);
+  if (e.iqama != null) { const span = el('span'); setTime(span, e.iqama, V.display.clock24); $('.p-iqama', li).append(el('span', { class: 'lbl', text: 'Iqama' }), span); }
+  li.setAttribute('aria-label', `Jumu'ah on Friday ${timeStr(e.adhan, V.display.clock24)}${e.iqama != null && iqamaVisible() ? `, Iqama ${timeStr(e.iqama, V.display.clock24)}` : ''}`);
+  return li;
 }
 function renderEmpty() {
   const ul = $('#prayers');
