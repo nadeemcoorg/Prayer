@@ -1,5 +1,5 @@
 # Builds preview_harness.html (app + mocked data + optional fake clock) for visual checks.
-# Usage: python tests/preview_harness.py phone 2026-10-04T20:45:00Z ['{"layout":"board"}']   (scenarios: phone, tv, phone_times, laptop)
+# Usage: python tests/preview_harness.py phone 2026-10-04T20:45:00Z ['{"layout":"board"}']   (scenarios: phone, tv, tv_portrait, phone_times, laptop)
 import base64, json, sys, os
 ROOT=os.path.join(os.path.dirname(os.path.abspath(__file__)),'..')
 name=sys.argv[1]; fake=sys.argv[2] if len(sys.argv)>2 else ''   # fake = ISO instant, e.g. 2026-10-05T20:50:00Z
@@ -18,7 +18,8 @@ window.fetch=function(u){var J=function(o){return Promise.resolve({ok:true,statu
  return Promise.reject(new Error('offline'))};
 window.addEventListener('load',function(){setTimeout(function(){__AFTER__},700)});})();</script>"""
 scen={'phone':(390,844,{"configured":True},''),'tv':(1920,1080,{"configured":True,"display":{"mode":"mosque","title":"Masjid Al-Noor"}},''),
- 'phone_times':(390,844,{"configured":True},"openSettings('times')"),'laptop':(1366,800,{"configured":True},'')}
+ 'phone_times':(390,844,{"configured":True},"openSettings('times')"),'laptop':(1366,800,{"configured":True},''),
+ 'tv_portrait':(1080,1920,{"configured":True,"display":{"mode":"mosque","title":"Masjid Al-Noor","orientation":"portrait"}},'')}
 w,h,s,after=scen[name]
 s=json.loads(json.dumps(s)); s.setdefault('display',{}).update(extra)
 doc=app.replace('<head>','<head>'+PRE.replace('__FAKE__',fake).replace('__MEM__',json.dumps({'pr.settings.v2':json.dumps(s)})).replace('__AFTER__',after),1)
