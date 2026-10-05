@@ -52,7 +52,7 @@ try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,
  eq(T.firedKeys.filter(k=>k==='Asr|adhan').length,1,'adhan fires once per prayer');
  // feedback
  T.logError('audio','NotAllowedError: play() failed'); T.logError('audio','NotAllowedError: play() failed');
- const dg=T.diagnostics(); eq(/App 2\.3\.0/.test(dg) && /London/.test(dg) && /\[audio\].*\(x2\)/.test(dg) && !/51\.5074/.test(dg),true,'diagnostics: version, city, de-duplicated errors, no exact GPS');
+ const dg=T.diagnostics(); eq(/App 2\.3\.1/.test(dg) && /London/.test(dg) && /\[audio\].*\(x2\)/.test(dg) && !/51\.5074/.test(dg),true,'diagnostics: version, city, de-duplicated errors, no exact GPS');
  mem['pr.outbox']=JSON.stringify([{type:'Problem',message:'Adhan did not play',email:''}]);
  await T.flushOutbox(); eq(posts.length,1,'saved (offline) feedback is sent when online');
  const b=new URLSearchParams(posts[0].body); eq([b.get('form-name'),b.get('type'),posts[0].headers['Content-Type']],['feedback','Problem','application/x-www-form-urlencoded'],'posted as Netlify form "feedback" (url-encoded)');

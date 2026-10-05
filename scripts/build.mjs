@@ -4,6 +4,8 @@
       (keeps friendly names already in manifest.json; new files get a name from the file name).
    2. If the optional "sharp" package is installed, creates images/optimized (≤2560 px) and
       images/thumbs (400 px) for new images. Without sharp, the original image is used.
+      On GitHub, the "Resize new images" workflow (.github/workflows/resize-images.yml) installs
+      sharp, runs this script and commits the resized copies, so Netlify never needs sharp.
    3. Copies only what the site needs into dist/ (originals are left out when a resized copy exists).
    No other dependencies. */
 import { promises as fs } from 'node:fs';
@@ -19,7 +21,7 @@ const list = async (dir, re) => (await exists(dir) ? (await fs.readdir(dir, { wi
 
 for (const must of ['index.html', 'sw.js']) if (!(await exists(path.join(root, must)))) { console.error(`✗ ${must} is missing from the repository — upload it and deploy again.`); process.exit(1); }
 let sharp = null;   // optional: install "sharp" yourself to auto-resize new images
-try { sharp = (await import('sharp')).default; } catch { console.log('ℹ Image resizing skipped (optional "sharp" package not installed) — new images are published at original size.'); }
+try { sharp = (await import('sharp')).default; } catch { console.log('ℹ Image resizing skipped (optional "sharp" package not installed) — new images are published at original size until the GitHub "Resize new images" workflow commits resized copies.'); }
 
 const old = {};
 try { const j = JSON.parse(await fs.readFile(path.join(root, 'manifest.json'), 'utf8')); for (const x of [...(j.images || []), ...(j.sounds || [])]) if (x && x.filename) old[x.filename] = x; } catch { }
