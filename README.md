@@ -14,7 +14,12 @@ A prayer-times display for **home** (phone, tablet, laptop) and **mosque** scree
   - Fajr is "now" until sunrise (Tulu', طلوع).
   - From sunrise until Dhuhr, no prayer is "now". After Fajr, the next item is **Ishraq** (الشروق, sunrise + 20 min), shown on the Sunrise card rather than a separate card.
   - Isha is "now" until Islamic midnight (half-way between sunset and sunrise).
-- **Makruh (مكروه) warning.** A red, blinking card and strip appear when Ruku and Sujood are not allowed: from Tulu' until Ishraq, and in the 20 minutes before Maghrib. The minutes can be changed in Settings → Prayer & Iqama.
+- **Makruh (مكروه) warning.** A red, blinking card and strip appear when Ruku and Sujood are not allowed:
+  - from Tulu' until Ishraq;
+  - at **Zawal (زوال)**: the 10 minutes before true solar noon, shown on the Dhuhr / Jumu'ah card. This follows the **Hanafi** view by default, so it also applies on Fridays;
+  - in the 20 minutes before Maghrib.
+
+  All minutes can be changed in Settings → Prayer & Iqama. The Zawal warning can be turned off (Maliki view), or skipped on Fridays only (Shafi'i view).
 - **Hijri date** is shown as, for example, "24 Rabi' al-Thani 1448 AH", with the Arabic ٢٤ ربيع الآخر ١٤٤٨ هـ.
 
 Settings → Location → **Compare with AlAdhan** shows both sets of times side by side.

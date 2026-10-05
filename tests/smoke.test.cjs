@@ -40,6 +40,15 @@ try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,
  eq(mk('2026-10-02','07:24'),null,'07:24 (Ishraq 07:23) → Makruh over');
  eq(st('2026-10-02','07:30'),[null,'Dhuhr'],'07:30 → next = Dhuhr');
  eq(st('2026-10-02','13:00'),['Dhuhr','Asr'],'13:00 → Dhuhr now');
+ // Zawal (Hanafi default: on, 10 min, Fridays included). 2026-10-02 is a Friday; 2026-10-05 a Monday
+ const zw=k=>{const z=sc(k).today.zawal;return z?new Date(z).toISOString().slice(11,16):null};
+ const zmk=(k,off,s=T.settings)=>{const m=T.makruhAt(sc(k).today.zawal+off*60000,sc(k),s);return m?m.card:null};
+ eq(zmk('2026-10-05',-5),'Dhuhr','Zawal−5 min → Makruh (Dhuhr card), weekday · zawal '+zw('2026-10-05'));
+ eq([zmk('2026-10-05',-11),zmk('2026-10-05',0)],[null,null],'Zawal−11 min and at solar noon → no Makruh');
+ eq(zmk('2026-10-02',-5),'Dhuhr',"Friday Zawal → Makruh (Hanafi: Friday included)");
+ const shafii=JSON.parse(JSON.stringify(T.settings)); shafii.display.zawalSkipFriday=true;
+ eq([zmk('2026-10-02',-5,shafii),zmk('2026-10-05',-5,shafii)],[null,'Dhuhr'],"'No Zawal on Fridays' option skips Friday only");
+ const off=JSON.parse(JSON.stringify(T.settings)); off.display.zawal=false; eq(zmk('2026-10-05',-5,off),null,'Zawal warning can be turned off');
  eq(mk('2026-10-02','18:20'),'Asr','18:20 (Maghrib−16) → Makruh (Asr card)');
  eq(mk('2026-10-02','18:10'),null,'18:10 (Maghrib−26) → no Makruh');
  eq(mk('2026-10-02','18:36'),null,'18:36 Maghrib → Makruh over');
@@ -52,7 +61,7 @@ try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,
  eq(T.firedKeys.filter(k=>k==='Asr|adhan').length,1,'adhan fires once per prayer');
  // feedback
  T.logError('audio','NotAllowedError: play() failed'); T.logError('audio','NotAllowedError: play() failed');
- const dg=T.diagnostics(); eq(/App 2\.3\.1/.test(dg) && /London/.test(dg) && /\[audio\].*\(x2\)/.test(dg) && !/51\.5074/.test(dg),true,'diagnostics: version, city, de-duplicated errors, no exact GPS');
+ const dg=T.diagnostics(); eq(/App 2\.4\.0/.test(dg) && /London/.test(dg) && /\[audio\].*\(x2\)/.test(dg) && !/51\.5074/.test(dg),true,'diagnostics: version, city, de-duplicated errors, no exact GPS');
  mem['pr.outbox']=JSON.stringify([{type:'Problem',message:'Adhan did not play',email:''}]);
  await T.flushOutbox(); eq(posts.length,1,'saved (offline) feedback is sent when online');
  const b=new URLSearchParams(posts[0].body); eq([b.get('form-name'),b.get('type'),posts[0].headers['Content-Type']],['feedback','Problem','application/x-www-form-urlencoded'],'posted as Netlify form "feedback" (url-encoded)');
