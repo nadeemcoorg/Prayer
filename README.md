@@ -33,6 +33,20 @@ From the Netlify site:
 
 The installed app opens full screen with its own icon and works offline.
 
+## Feedback and error reports
+
+Users can send suggestions, problems or "wrong prayer time" reports from **Settings → Feedback**.
+- **Optional diagnostics.** Users can choose to include app version, browser, settings, today's times, the city (never exact GPS) and the last errors recorded on the device. A preview shows exactly what will be sent.
+- **Offline.** A message written offline is saved and sent automatically when the device is back online.
+- **Limits.** At most 5 messages per device per day, plus a hidden spam trap.
+
+**Receiving the messages (one-time setup in Netlify):**
+1. Netlify → your project → **Forms** → **Enable form detection** (if not already on).
+2. Deploy this version. A form called **feedback** appears under **Forms**.
+3. **Forms → Submission notifications → Add notification → Email notification**: enter your email address and choose the *feedback* form.
+
+Every message is also kept under **Forms → feedback** in Netlify.
+
 ## Deploying on Netlify
 
 **Option A: drag and drop.** Drag this folder onto Netlify.
