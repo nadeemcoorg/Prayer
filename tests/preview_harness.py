@@ -1,8 +1,9 @@
 # Builds preview_harness.html (app + mocked data + optional fake clock) for visual checks.
-# Usage: python tests/preview_harness.py phone 2026-10-04T20:45:00Z   (scenarios: phone, tv, phone_times, laptop)
+# Usage: python tests/preview_harness.py phone 2026-10-04T20:45:00Z ['{"layout":"board"}']   (scenarios: phone, tv, phone_times, laptop)
 import base64, json, sys, os
 ROOT=os.path.join(os.path.dirname(os.path.abspath(__file__)),'..')
 name=sys.argv[1]; fake=sys.argv[2] if len(sys.argv)>2 else ''   # fake = ISO instant, e.g. 2026-10-05T20:50:00Z
+extra=json.loads(sys.argv[3]) if len(sys.argv)>3 else {}   # optional display settings, e.g. '{"layout":"board"}'
 app=open(os.path.join(ROOT,'index.html'),encoding='utf-8').read()
 man=open(os.path.join(ROOT,'manifest.js'),encoding='utf-8').read()
 app=app.replace('<script src="manifest.js"></script>','<script>'+man+'</script>')
@@ -19,6 +20,7 @@ window.addEventListener('load',function(){setTimeout(function(){__AFTER__},700)}
 scen={'phone':(390,844,{"configured":True},''),'tv':(1920,1080,{"configured":True,"display":{"mode":"mosque","title":"Masjid Al-Noor"}},''),
  'phone_times':(390,844,{"configured":True},"openSettings('times')"),'laptop':(1366,800,{"configured":True},'')}
 w,h,s,after=scen[name]
+s=json.loads(json.dumps(s)); s.setdefault('display',{}).update(extra)
 doc=app.replace('<head>','<head>'+PRE.replace('__FAKE__',fake).replace('__MEM__',json.dumps({'pr.settings.v2':json.dumps(s)})).replace('__AFTER__',after),1)
 b=base64.b64encode(doc.encode()).decode()
 page=f"""<!doctype html><html><head><meta charset=utf-8><style>html,body{{margin:0;background:#333;overflow:hidden}}#w{{transform-origin:0 0}}iframe{{border:0;display:block;width:{w}px;height:{h}px}}</style></head><body><div id=w><iframe id=f></iframe></div><script>
