@@ -58,6 +58,7 @@ No user accounts, no backend server. Everything runs in the browser; settings ar
 | `tests/smoke.test.cjs` | Automated test: runs the real app code with a stub DOM and mocked network (`node tests/smoke.test.cjs`) |
 | `tests/preview_harness.py` | Builds `tests/preview_harness.html` for visual checks with mocked data and a fake clock |
 | `_backup/` | Original v1 files (`Index.original.html`, etc.) |
+| `CLAUDE.md` | Standing instructions for Claude sessions (what "deploy" means) |
 | `README.md` | User and admin guide (deploying, offline, feedback setup, install on phone) |
 
 ---
