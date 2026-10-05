@@ -879,6 +879,7 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
 const APP_VERSION = '2.4.0';
 const PRAYERS = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 const LAYOUTS = ['classic', 'board', 'split', 'sunpath'];
+const LIST_LAYOUTS = ['board', 'split'];   // layouts that show prayers as table rows (Prayer · Adhan · Iqama)
 const SALAH = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 const LABEL = { Fajr: 'Fajr', Sunrise: 'Sunrise', Ishraq: 'Ishraq', Dhuhr: 'Dhuhr', Jumuah: "Jumu'ah", Asr: 'Asr', Maghrib: 'Maghrib', Isha: 'Isha' };
 const AR = { Fajr: 'الفجر', Sunrise: 'طلوع', Ishraq: 'الشروق', Dhuhr: 'الظهر', Jumuah: 'الجمعة', Asr: 'العصر', Maghrib: 'المغرب', Isha: 'العشاء' };
@@ -1479,7 +1480,7 @@ function updateLayoutClasses(s = V) {
   const portrait = mosque && (D.orientation === 'portrait' || (D.orientation === 'auto' && mqPortrait.matches));
   R.classList.toggle('fill', fill);
   R.classList.toggle('portrait', portrait);
-  R.classList.toggle('list-mode', fill ? portrait : w < 600);
+  R.classList.toggle('list-mode', LIST_LAYOUTS.includes(D.layout) || (fill ? portrait : w < 600));
   for (const l of LAYOUTS) R.classList.toggle('lay-' + l, D.layout === l);
 }
 
@@ -1664,7 +1665,7 @@ function tick() {
   if (!sc.today) { renderHijri(null); renderEmpty(); applyAuto(null, false); overlayTick(now); return; }
   renderHijri(sc.today);
 
-  const sig = `${now.key}|${version}|${R.classList.contains('show-iqama')}|${V.display.showSunrise}|${V.display.clock24}|${V.display.makruhMin}`;
+  const sig = `${now.key}|${version}|${R.classList.contains('show-iqama')}|${V.display.showSunrise}|${V.display.clock24}|${V.display.makruhMin}|${V.display.layout}`;
   if (sig !== rowsSig) { rowsSig = sig; buildRows(sc.today); }
 
   const { next, tomorrow, current, sunriseEv, afterSunrise, yMid } = prayerState(now.ms, sc);
