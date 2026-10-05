@@ -3,7 +3,7 @@
 > **For a new Claude session / new developer:** read this file first, then `README.md`.
 > Repository: **`nadeemcoorg/Prayer`** on GitHub (default branch `main`, deployed by Netlify).
 > It records what the app is, how it is built, every revision so far, the decisions the owner made (and why), and what is still open.
-> Last updated: **2026-10-05** · Current version: **2.3.1** · Owner: Nadeem Ahmad (GitHub: `nadeemcoorg`)
+> Last updated: **2026-10-05** · Current version: **2.4.0** · Owner: Nadeem Ahmad (GitHub: `nadeemcoorg`)
 
 ---
 
@@ -31,6 +31,7 @@ No user accounts, no backend server. Everything runs in the browser; settings ar
 | Ishraq | **Ishraq (الشروق)** = sunrise + 20 min. **No separate card**: shown on the Sunrise card. After Fajr, the "Next prayer" panel counts down to Ishraq |
 | "Now" rules | Fajr is "now" until sunrise. **Sunrise → Dhuhr: nothing is "now"**. Isha is "now" until **Islamic midnight** (half-way sunset → sunrise) |
 | Makruh (spelling: *Makruh*, مكروه) | Red, blinking card plus red strip: **Tulu' → Ishraq** and **Maghrib − 20 min → Maghrib**. Text: "Ruku and Sujood are not allowed". The pre-Maghrib warning is on the **Asr** card (the current period); the owner was told and didn't object |
+| Zawal (زوال) | **Hanafi by default**: a third Makruh window, **10 min before true solar noon → noon**, every day **including Friday**, on the **Dhuhr / Jumu'ah card**. Settings → Prayer & Iqama: on/off (Maliki users turn it off), minutes (3–30), and "No Zawal warning on Fridays" (Shafi'i, off by default). The window ends at solar noon, not at the shown Dhuhr time, for methods that add minutes to Dhuhr (Türkiye, Dubai, Morocco, Lisbon) |
 | Minutes | 20 by default (Settings → Prayer & Iqama → "Minutes"), used for both Ishraq and pre-Maghrib Makruh |
 | Feedback | Netlify Forms with an email notification (address configured in Netlify, never in code) |
 | Images | No uploads to all users yet. Per-device uploads only (one custom background and one adhan per device) |
@@ -167,16 +168,23 @@ A single `Index.html` with major bugs found in the first review:
 - On-device error log (script errors, failed lookups, blocked audio, geolocation and offline-support failures).
 - "Report a problem" button on the error screen.
 
-### v2.3.1: automatic image resizing, docs refresh (current)
+### v2.3.1: automatic image resizing, docs refresh
 - New GitHub Action **Resize new images** (`.github/workflows/resize-images.yml`): images uploaded to `images/` through GitHub are resized and committed back automatically, then Netlify redeploys. `sharp` is installed only inside the Action, so the Netlify build stays dependency-free (the v2.1.1 decision holds).
 - README and HANDOVER brought up to date: resizing, the repository instead of a local folder, the Moonsighting Committee offline limit.
+- `CLAUDE.md` added: what "deploy" means (merge → pull → check and fix → push).
+
+### v2.4.0: Zawal Makruh window (current)
+- Third Makruh window at **Zawal**, Hanafi by default (on, 10 min, Fridays included). Based on Sahih Muslim 831 (the three forbidden times).
+- `dayEvents()` now returns `zawal` (true solar noon: the day's Dhuhr before user offsets and Jumu'ah, minus the method's own Dhuhr minutes); `makruhAt()` checks `zawal − zawalMin → zawal`.
+- New settings `display.zawal`, `display.zawalMin`, `display.zawalSkipFriday`. Existing screens get the Hanafi default on update.
+- Tests: 5 new checks (weekday, edges, Friday, Shafi'i Friday option, off). Verified on screen (1920×1080, Tokyo, before and after noon) and in Settings on a phone.
 
 ---
 
 ## 6. Testing
 
-- **Automated:** `node tests/smoke.test.cjs`. Expected: **26 passed, 0 failed, errors: none**. It covers:
-  - location lookup and on-device times; Fajr/Ishraq/Dhuhr/Isha "now/next" rules; Makruh windows;
+- **Automated:** `node tests/smoke.test.cjs`. Expected: **31 passed, 0 failed, errors: none**. It covers:
+  - location lookup and on-device times; Fajr/Ishraq/Dhuhr/Isha "now/next" rules; Makruh windows, including Zawal;
   - Islamic midnight; Hijri date; iPhone install state; the adhan fires once;
   - diagnostics content; offline feedback outbox; Netlify form encoding.
 - **Visual:** `python tests/preview_harness.py <phone|tv|phone_times|laptop> [fake ISO time]` → open `tests/preview_harness.html`.
@@ -214,7 +222,7 @@ A single `Index.html` with major bugs found in the first review:
    - (D) admin PIN for Settings in Mosque mode.
 
    Recommended: **D + A** now, C later if shared uploads are added. Note: block only when people or animals are the *main subject* (the bundled "Madinah Courtyard" image has small people in it). **Waiting for a decision.**
-4. **Zawal** (just before Dhuhr) as an optional third Makruh window. Suggested, not requested yet.
+4. ~~**Zawal** as a third Makruh window~~: done in v2.4.0 (Hanafi default).
 5. Phase 2 idea (only if needed): admin uploads that reach all screens instantly (Supabase or Firebase plus an admin page).
 
 ---

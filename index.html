@@ -631,10 +631,15 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
             <option value="off">Never show</option>
           </select></div>
         <label class="sw"><input type="checkbox" data-k="display.showSunrise"><span class="track"></span><span class="txt">Show Sunrise card (Tulu' · طلوع)<small>Marks the end of Fajr time. Ishraq (الشروق) is shown on the same card. No adhan is played.</small></span></label>
-        <label class="sw"><input type="checkbox" data-k="display.makruh"><span class="track"></span><span class="txt">Makruh (مكروه) warning<small>Red, blinking warning from Tulu' until Ishraq, and before Maghrib — Ruku and Sujood are not allowed.</small></span></label>
+        <label class="sw"><input type="checkbox" data-k="display.makruh"><span class="track"></span><span class="txt">Makruh (مكروه) warning<small>Red, blinking warning from Tulu' until Ishraq, at Zawal, and before Maghrib — Ruku and Sujood are not allowed.</small></span></label>
         <div class="field"><label for="fMk">Minutes (Ishraq after sunrise, and Makruh before Maghrib)</label>
           <input class="inp" id="fMk" type="number" min="5" max="60" step="1" data-k="display.makruhMin" style="max-width:8em">
           <p class="hint">Default 20 minutes.</p></div>
+        <label class="sw"><input type="checkbox" data-k="display.zawal"><span class="track"></span><span class="txt">Zawal (زوال) warning before Dhuhr<small>Makruh while the sun is at its highest, until true solar noon. On by default (Hanafi). Maliki users may turn it off.</small></span></label>
+        <div class="field"><label for="fZw">Minutes before solar noon</label>
+          <input class="inp" id="fZw" type="number" min="3" max="30" step="1" data-k="display.zawalMin" style="max-width:8em">
+          <p class="hint">Default 10 minutes.</p></div>
+        <label class="sw"><input type="checkbox" data-k="display.zawalSkipFriday"><span class="track"></span><span class="txt">No Zawal warning on Fridays<small>Shafi'i view. Leave off for Hanafi and Hanbali.</small></span></label>
       </section>
     </div>
 
@@ -842,7 +847,7 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
      saved) is the backup when on-device calculation isn't possible.
    • Settings live in localStorage; large uploaded files live in IndexedDB.
    ========================================================================== */
-const APP_VERSION = '2.3.1';
+const APP_VERSION = '2.4.0';
 const PRAYERS = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 const SALAH = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 const LABEL = { Fajr: 'Fajr', Sunrise: 'Sunrise', Ishraq: 'Ishraq', Dhuhr: 'Dhuhr', Jumuah: "Jumu'ah", Asr: 'Asr', Maghrib: 'Maghrib', Isha: 'Isha' };
@@ -887,6 +892,7 @@ const DEFAULTS = {
   display: {
     mode: 'home', orientation: 'auto', title: '', announcements: '', keepAwake: false,
     clock24: true, showSeconds: true, showHijri: true, showArabic: true, showSunrise: true, showIqama: 'auto', makruh: true, makruhMin: 20,
+    zawal: true, zawalMin: 10, zawalSkipFriday: false,   // Hanafi default: Zawal is Makruh every day, Friday included
     background: '', newContent: 'list', dim: 35, panelColor: '#0b1220', panelOpacity: 55, accent: '#7ee0a1', textScale: 100, iqamaScreen: 2
   }
 };
@@ -1017,6 +1023,7 @@ function loadSettings() {
   if (s.timezone !== 'auto' && !tzValid(s.timezone)) s.timezone = 'auto';
   if (!['auto', 'aladhan'].includes(s.source)) s.source = 'auto';
   s.display.makruhMin = Math.min(60, Math.max(5, Math.round(+s.display.makruhMin || 20)));
+  s.display.zawalMin = Math.min(30, Math.max(3, Math.round(+s.display.zawalMin || 10)));
   return s;
 }
 /** Bring settings over from the original version (key "prayerSettings"). */
@@ -1383,7 +1390,11 @@ function dayEvents(key, s) {
     }
     events.push({ key: p, name, date: key, sunrise: p === 'Sunrise', adhan: base + min * 60000, iqama: iq == null ? null : base + iq * 60000 });
   }
-  return { key, events, hijri: d.h, fri, midnight: d.mid != null ? base + d.mid * 60000 : null, src: d.src };
+  // Zawal (true solar noon): Dhuhr before offsets / Jumu'ah, minus the minutes some methods add to Dhuhr
+  const dh = d.min ? d.min.Dhuhr : toMin(d.t && d.t.Dhuhr);
+  const tune = (METHOD_PARAMS[settings.method] && METHOD_PARAMS[settings.method].tune) || {};
+  const zawal = dh == null ? null : base + (dh - (tune.dhuhr || 0)) * 60000;
+  return { key, events, hijri: d.h, fri, zawal, midnight: d.mid != null ? base + d.mid * 60000 : null, src: d.src };
 }
 const memo = new Map();
 function schedule(key, s) {
@@ -1550,12 +1561,16 @@ function setStatus(kind, msg = '') {
 }
 
 const makruhMs = (s = V) => Math.min(60, Math.max(5, Math.round(+s.display.makruhMin || 20))) * 60000;
-/** Makruh (مكروه) times, when Ruku and Sujood are not allowed: Tulu' (sunrise) → Ishraq, and 20 min before Maghrib → Maghrib. */
+const zawalMs = (s = V) => Math.min(30, Math.max(3, Math.round(+s.display.zawalMin || 10))) * 60000;
+/** Makruh (مكروه) times, when Ruku and Sujood are not allowed: Tulu' (sunrise) → Ishraq,
+    Zawal (10 min before true solar noon → noon; optional, Hanafi default), and 20 min before Maghrib → Maghrib. */
 function makruhAt(nowMs, sc, s = V) {
   if (!s.display.makruh || !sc.today) return null;
   const n = makruhMs(s);
   const sr = sc.today.events.find(e => e.sunrise), mg = sc.today.events.find(e => e.key === 'Maghrib');
   if (sr && nowMs >= sr.adhan && nowMs < sr.adhan + n) return { card: 'Sunrise', until: sr.adhan + n };
+  const z = sc.today.zawal;
+  if (s.display.zawal && z && !(sc.today.fri && s.display.zawalSkipFriday) && nowMs >= z - zawalMs(s) && nowMs < z) return { card: 'Dhuhr', until: z, zawal: true };
   if (mg && nowMs >= mg.adhan - n && nowMs < mg.adhan) return { card: 'Asr', until: mg.adhan };
   return null;
 }
