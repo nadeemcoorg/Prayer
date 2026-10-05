@@ -1,0 +1,10 @@
+{
+  "name": "prayer-times",
+  "version": "2.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Prayer times display for home and mosque screens",
+  "scripts": {
+    "build": "node scripts/build.mjs"
+  }
+}

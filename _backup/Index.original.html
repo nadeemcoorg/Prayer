@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prayer Reminder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        /* IMPROVEMENT 2: Fluid Container Widths */
+        .container {
+            width: min(95%, 1400px);
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        /* IMPROVEMENT 5: Responsive Header Text */
+        .header h1 {
+            font-size: clamp(1.2rem, 3vw, 2rem);
+        }
+
+        /* IMPROVEMENT 9: Avoid Fixed Button Sizes */
+        .settings-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: clamp(40px, 6vw, 55px);
+            height: clamp(40px, 6vw, 55px);
+            color: white;
+            font-size: clamp(16px, 2.5vw, 20px);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        /* IMPROVEMENT 2 & 4: Fluid Container + Responsive Padding/Spacing */
+        .current-time-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: clamp(16px, 4vw, 32px);
+            margin-top: clamp(30px, 8vh, 80px);
+            margin-bottom: clamp(20px, 5vh, 40px);
+            margin-left: auto;
+            margin-right: auto;
+            width: min(90%, 900px);
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .current-time-label {
+            font-size: clamp(12px, 2vw, 16px);
+            opacity: 0.8;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: white;
+        }
+
+        /* IMPROVEMENT 1 & 7: Responsive Font Sizes + Viewport Height Emphasis */
+        .current-time-large {
+            font-size: clamp(2.5rem, 8vw, 6rem);
+            font-size: min(10vh, 6rem); /* Emphasis using viewport height */
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+            font-family: 'Segoe UI', monospace, sans-serif;
+            color: white;
+            line-height: 1;
+        }
+
+        .current-date-small {
+            font-size: clamp(14px, 2vw, 18px);
+            opacity: 0.9;
+            font-weight: 500;
+            color: white;
+        }
+
+        /* IMPROVEMENT 3: Switch to CSS Grid + IMPROVEMENT 4: Responsive Padding */
+        .prayer-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: clamp(12px, 2vw, 16px);
+            margin-top: clamp(30px, 8vh, 60px);
+            padding: clamp(12px, 3vw, 24px);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            /* Removed: flex-wrap: nowrap; overflow-x: auto; */
+        }
+
+        .prayer-card {
+            background: linear-gradient(145deg, #2c5364, #203a43);
+            border-radius: 15px;
+            padding: clamp(15px, 3vw, 20px);
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .prayer-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .prayer-card.next {
+            border-color: #90EE90;
+            animation: glow 1.5s infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 10px #90EE90; }
+            to { box-shadow: 0 0 20px #90EE90, 0 0 30px #90EE90; }
+        }
+
+        /* IMPROVEMENT 1: Responsive Font Sizes */
+        .prayer-name {
+            font-size: clamp(1rem, 2vw, 1.4rem);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .prayer-time {
+            font-size: clamp(0.9rem, 1.8vw, 1.2rem);
+            opacity: 0.9;
+        }
+
+        .iqama-time {
+            font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+            opacity: 0.7;
+            margin-top: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .iqama-time.hidden {
+            display: none;
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: clamp(12px, 2vw, 15px);
+            margin-top: 20px;
+            text-align: center;
+            font-size: clamp(0.85rem, 1.5vw, 1rem);
+        }
+
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+        }
+
+        /* IMPROVEMENT 6: Improved Modal Height Handling */
+        .settings-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border: none;
+            border-radius: 20px;
+            padding: 0;
+            width: 95%;
+            max-width: 700px;
+            max-height: 90vh;
+            height: auto;
+            overflow-y: auto;
+            color: #333;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .settings-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: clamp(15px, 3vw, 20px) clamp(20px, 4vw, 25px);
+            border-radius: 20px 20px 0 0;
+            font-weight: bold;
+            position: relative;
+            font-size: clamp(16px, 2.5vw, 18px);
+            text-align: center;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: clamp(18px, 2.5vw, 20px);
+            cursor: pointer;
+            font-weight: bold;
+            width: clamp(30px, 5vw, 35px);
+            height: clamp(30px, 5vw, 35px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .settings-body {
+            padding: clamp(15px, 3vw, 25px);
+        }
+
+        .setting-group {
+            margin-bottom: clamp(15px, 3vw, 20px);
+            background: white;
+            padding: clamp(12px, 2.5vw, 15px);
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .setting-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+            font-size: clamp(13px, 2vw, 15px);
+        }
+
+        .setting-input, .setting-select {
+            width: 100%;
+            padding: clamp(8px, 1.5vw, 10px);
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: clamp(13px, 2vw, 14px);
+            background: #f9f9f9;
+            transition: border-color 0.3s ease;
+        }
+
+        .setting-input:focus, .setting-select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .setting-description {
+            margin-top: 5px;
+            font-size: clamp(11px, 1.5vw, 12px);
+            color: #666;
+            font-style: italic;
+        }
+
+        .btn-primary, .btn-secondary, .btn-danger {
+            padding: clamp(10px, 2vw, 12px) clamp(20px, 3vw, 24px);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: clamp(13px, 2vw, 14px);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: clamp(3px, 1vw, 5px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-test {
+            background: #28a745;
+            color: white;
+            padding: clamp(6px, 1.5vw, 8px) clamp(12px, 2vw, 16px);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: clamp(11px, 1.5vw, 12px);
+            margin-left: 10px;
+            transition: background 0.3s ease;
+        }
+
+        .btn-test:hover {
+            background: #218838;
+        }
+
+        .settings-footer {
+            padding: clamp(15px, 3vw, 20px);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .color-picker-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .color-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-input-wrapper input[type="color"] {
+            width: clamp(40px, 8vw, 50px);
+            height: clamp(40px, 8vw, 50px);
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .opacity-slider-wrapper {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .opacity-slider-wrapper input[type="range"] {
+            width: 100%;
+        }
+
+        .file-upload-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .file-upload-btn {
+            background: #f0f0f0;
+            padding: clamp(8px, 2vw, 10px) clamp(12px, 2.5vw, 15px);
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: clamp(12px, 2vw, 13px);
+        }
+
+        .file-upload-btn:hover {
+            background: #e8e8e8;
+            border-color: #999;
+        }
+
+        .file-upload-btn input[type="file"] {
+            display: none;
+        }
+
+        .file-info {
+            font-size: clamp(11px, 1.5vw, 12px);
+            color: #666;
+            font-style: italic;
+        }
+
+        /* IMPROVEMENT 8: Breakpoint for Very Large Screens */
+        @media (min-width: 1600px) {
+            .current-time-large {
+                font-size: 7rem;
+            }
+
+            .prayer-card {
+                padding: 30px;
+            }
+
+            .container {
+                max-width: 1600px;
+            }
+        }
+
+        /* Additional responsive improvements for small screens */
+        @media (max-width: 768px) {
+            .prayer-cards {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            .prayer-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .current-time-container {
+                border-radius: 10px;
+            }
+
+            .settings-content {
+                width: 98%;
+                border-radius: 15px;
+            }
+        }
+
+        /* Additional utility classes for display modes */
+        body.kiosk-mode .current-time-large {
+            font-size: clamp(4rem, 12vw, 8rem);
+        }
+
+        body.kiosk-mode .prayer-card {
+            padding: clamp(20px, 4vw, 35px);
+        }
+
+        body.kiosk-mode .prayer-name {
+            font-size: clamp(1.2rem, 3vw, 2rem);
+        }
+
+        body.kiosk-mode .prayer-time {
+            font-size: clamp(1rem, 2.5vw, 1.6rem);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🕌 Prayer Times</h1>
+            <button class="settings-btn" onclick="openSettings()" title="Settings">⚙️</button>
+        </div>
+
+        <div class="current-time-container">
+            <div class="current-time-label">Current Time</div>
+            <div class="current-time-large" id="currentTime">--:--:--</div>
+            <div class="current-date-small" id="currentDate">Loading...</div>
+        </div>
+
+        <div class="prayer-cards" id="prayerCards">
+            <!-- Prayer cards will be populated by JavaScript -->
+        </div>
+
+        <div class="info-panel">
+            <div id="nextPrayerInfo">Loading prayer times...</div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="settings-modal">
+        <div class="settings-content">
+            <div class="settings-header">
+                Prayer Times Settings
+                <button class="close-btn" onclick="closeSettings()">×</button>
+            </div>
+            
+            <div class="settings-body">
+                <!-- Location Settings -->
+                <div class="setting-group">
+                    <label class="setting-label">📍 Location</label>
+                    <input type="text" id="locationInput" class="setting-input" 
+                           placeholder="Enter city name (e.g., Tokyo, Japan)" value="Tokyo, Japan">
+                    <div class="setting-description">Enter your city to get accurate prayer times</div>
+                </div>
+
+                <!-- Timezone Settings -->
+                <div class="setting-group">
+                    <label class="setting-label">🌍 Timezone</label>
+                    <select id="timezoneSelect" class="setting-select">
+                        <option value="auto">Auto Detect</option>
+                        <option value="Asia/Tokyo">Asia/Tokyo</option>
+                        <option value="America/New_York">America/New_York</option>
+                        <option value="Europe/London">Europe/London</option>
+                        <option value="Asia/Dubai">Asia/Dubai</option>
+                        <option value="Asia/Riyadh">Asia/Riyadh</option>
+                    </select>
+                </div>
+
+                <!-- Calculation Method -->
+                <div class="setting-group">
+                    <label class="setting-label">📐 Calculation Method</label>
+                    <select id="calculationMethod" class="setting-select">
+                        <option value="5">Muslim World League</option>
+                        <option value="2">Islamic Society of North America (ISNA)</option>
+                        <option value="3">Egyptian General Authority</option>
+                        <option value="4">Umm Al-Qura University, Makkah</option>
+                        <option value="1">University of Islamic Sciences, Karachi</option>
+                    </select>
+                </div>
+
+                <!-- Auto Update Toggle -->
+                <div class="setting-group">
+                    <label class="setting-label">🔄 Auto Update Prayer Times</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="autoUpdateToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span>Enable automatic updates</span>
+                    </div>
+                </div>
+
+                <!-- Real-time Adhan Toggle -->
+                <div class="setting-group">
+                    <label class="setting-label">🔔 Real-time Adhan Alerts</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="realTimeAdhanToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span>Play adhan at prayer time</span>
+                    </div>
+                    <div class="setting-description">Browser must remain open and notifications enabled</div>
+                </div>
+
+                <!-- Adhan Tone Selection -->
+                <div class="setting-group">
+                    <label class="setting-label">🎵 Adhan Tone</label>
+                    <select id="adhanToneSelect" class="setting-select" onchange="handleAdhanSelection(this)">
+                        <option value="makkah">Makkah Adhan</option>
+                        <option value="medina">Medina Adhan</option>
+                        <option value="egyptian">Egyptian Adhan</option>
+                        <option value="Custom File">Upload Custom Adhan</option>
+                    </select>
+                    <button class="btn-test" onclick="testAdhan()">Test Sound</button>
+                    
+                    <div id="customAdhanUpload" style="display: none; margin-top: 10px;">
+                        <div class="file-upload-wrapper">
+                            <label class="file-upload-btn">
+                                <input type="file" id="adhanFileInput" accept="audio/*" onchange="handleAdhanUpload(this)">
+                                📁 Choose Audio File
+                            </label>
+                            <div class="file-info">Supported: MP3, WAV, OGG (Max 10MB)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Background Image -->
+                <div class="setting-group">
+                    <label class="setting-label">🖼️ Background Image</label>
+                    <select id="backgroundSelect" class="setting-select" onchange="handleBackgroundSelection(this)">
+                        <option value="">Default Gradient</option>
+                        <option value="kaaba">Kaaba</option>
+                        <option value="mosque">Mosque</option>
+                        <option value="medina">Medina</option>
+                        <option value="islamic-pattern">Islamic Pattern</option>
+                        <option value="custom">Upload Custom Background</option>
+                    </select>
+                    
+                    <div id="customBackgroundUpload" style="display: none; margin-top: 10px;">
+                        <div class="file-upload-wrapper">
+                            <label class="file-upload-btn">
+                                <input type="file" id="backgroundFileInput" accept="image/*" onchange="handleBackgroundUpload(this)">
+                                📁 Choose Image File
+                            </label>
+                            <div class="file-info">Supported: JPG, PNG (Max 5MB)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Container Color Customization -->
+                <div class="setting-group">
+                    <label class="setting-label">🎨 Container Color & Opacity</label>
+                    <div class="color-picker-group">
+                        <div class="color-input-wrapper">
+                            <label>Color:</label>
+                            <input type="color" id="containerColorInput" value="#ffffff" onchange="updateContainerColor()">
+                        </div>
+                        <div class="opacity-slider-wrapper">
+                            <label>Opacity: <span id="opacityValue">15%</span></label>
+                            <input type="range" id="containerOpacitySlider" min="5" max="50" value="15" 
+                                   oninput="updateOpacityDisplay(this.value); updateContainerColor()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Version Type -->
+                <div class="setting-group">
+                    <label class="setting-label">📺 Display Mode</label>
+                    <select id="versionSelect" class="setting-select" onchange="toggleVersionMode(this.value)">
+                        <option value="home">Home Version</option>
+                        <option value="kiosk">Kiosk Mode (Mosque/TV)</option>
+                    </select>
+                    <div class="setting-description">Kiosk mode optimizes display for large screens</div>
+                </div>
+            </div>
+
+            <div class="settings-footer">
+                <button class="btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+                <button class="btn-secondary" onclick="resetSettings()">🔄 Reset to Default</button>
+                <button class="btn-danger" onclick="closeSettings()">✖ Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let prayerTimes = {};
+        let settings = {
+            timezone: 'auto',
+            autoUpdate: true,
+            calculationMethod: 5,
+            adhanEnabled: true,
+            adhanTone: 'makkah',
+            enableRealTimeAdhan: false,
+            versionType: 'home',
+            containerColor: '#ffffff',
+            containerOpacity: 15,
+            customAdhanFile: null,
+            customAdhanName: '',
+            customBackgroundFile: null,
+            customBackgroundName: ''
+        };
+
+        let nextPrayerTimeout = null;
+        let customAdhanAudio = null;
+        let manifestData = null;
+
+        // Load manifest file with available images and sounds
+        async function loadManifest() {
+            try {
+                const response = await fetch('manifest.json');
+                if (response.ok) {
+                    manifestData = await response.json();
+                    console.log('✅ Manifest loaded successfully');
+                    console.log(`   - ${manifestData.images?.length || 0} images`);
+                    console.log(`   - ${manifestData.sounds?.length || 0} sounds`);
+                    if (manifestData.generated) {
+                        console.log(`   - Generated: ${manifestData.generated}`);
+                    }
+                    populateDropdowns();
+                } else {
+                    console.warn('⚠️  Manifest file not found, using default options');
+                    console.log('💡 Tip: Run generate-manifest.js or generate-manifest.py to create manifest.json');
+                    useDefaultOptions();
+                }
+            } catch (error) {
+                console.warn('⚠️  Could not load manifest:', error.message);
+                console.log('💡 Tip: Make sure manifest.json exists in the same folder as Index.html');
+                useDefaultOptions();
+            }
+        }
+
+        // Populate dropdowns from manifest data
+        function populateDropdowns() {
+            if (!manifestData) return;
+
+            // Populate background images dropdown
+            const bgSelect = document.getElementById('backgroundSelect');
+            if (bgSelect && manifestData.images) {
+                // Store current selection
+                const currentValue = bgSelect.value;
+                
+                // Clear dynamic options (keep Default and Custom)
+                const options = Array.from(bgSelect.options);
+                options.forEach(opt => {
+                    if (opt.value !== '' && opt.value !== 'custom') {
+                        opt.remove();
+                    }
+                });
+                
+                // Add images from manifest before the Custom option
+                const customOption = bgSelect.querySelector('option[value="custom"]');
+                manifestData.images.forEach(img => {
+                    const option = document.createElement('option');
+                    option.value = img.id;
+                    option.textContent = img.name;
+                    option.setAttribute('data-file', img.filename);
+                    option.setAttribute('title', img.description || '');
+                    
+                    if (customOption) {
+                        bgSelect.insertBefore(option, customOption);
+                    } else {
+                        bgSelect.appendChild(option);
+                    }
+                });
+                
+                // Restore selection
+                bgSelect.value = currentValue;
+                
+                console.log(`Loaded ${manifestData.images.length} background images`);
+            }
+
+            // Populate adhan sounds dropdown
+            const adhanSelect = document.getElementById('adhanToneSelect');
+            if (adhanSelect && manifestData.sounds) {
+                // Store current selection
+                const currentValue = adhanSelect.value;
+                
+                // Clear dynamic options (keep Custom File)
+                const options = Array.from(adhanSelect.options);
+                options.forEach(opt => {
+                    if (opt.value !== 'Custom File') {
+                        opt.remove();
+                    }
+                });
+                
+                // Add sounds from manifest before the Custom option
+                const customOption = adhanSelect.querySelector('option[value="Custom File"]');
+                manifestData.sounds.forEach(sound => {
+                    const option = document.createElement('option');
+                    option.value = sound.id;
+                    option.textContent = sound.name;
+                    option.setAttribute('data-file', sound.filename);
+                    option.setAttribute('title', sound.description || '');
+                    
+                    if (customOption) {
+                        adhanSelect.insertBefore(option, customOption);
+                    } else {
+                        adhanSelect.appendChild(option);
+                    }
+                });
+                
+                // Restore selection if it exists, otherwise use first option
+                if (currentValue && adhanSelect.querySelector(`option[value="${currentValue}"]`)) {
+                    adhanSelect.value = currentValue;
+                } else if (manifestData.sounds.length > 0) {
+                    adhanSelect.value = manifestData.sounds[0].id;
+                    settings.adhanTone = manifestData.sounds[0].id;
+                }
+                
+                console.log(`Loaded ${manifestData.sounds.length} adhan sounds`);
+            }
+        }
+
+        // Use default hardcoded options if manifest is not available
+        function useDefaultOptions() {
+            console.log('Using default hardcoded options');
+            // The HTML already has default options, so nothing to do
+        }
+
+        // Get filename for a given ID
+        function getFilename(type, id) {
+            if (!manifestData) {
+                // Fallback to default naming
+                if (type === 'image') {
+                    return `images/${id}.jpg`;
+                } else if (type === 'sound') {
+                    return `sounds/${id}.mp3`;
+                }
+            }
+            
+            if (type === 'image' && manifestData.images) {
+                const img = manifestData.images.find(i => i.id === id);
+                return img ? `images/${img.filename}` : `images/${id}.jpg`;
+            } else if (type === 'sound' && manifestData.sounds) {
+                const sound = manifestData.sounds.find(s => s.id === id);
+                return sound ? `sounds/${sound.filename}` : `sounds/${id}.mp3`;
+            }
+            
+            return null;
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            loadManifest().then(() => {
+                loadSettings();
+                updateClock();
+                setInterval(updateClock, 1000);
+                fetchPrayerTimes();
+                if (settings.autoUpdate) {
+                    setInterval(fetchPrayerTimes, 3600000);
+                }
+                requestNotificationPermission();
+                applyContainerColor();
+            });
+        };
+
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            const dateString = now.toLocaleDateString('en-US', { 
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            document.getElementById('currentTime').textContent = timeString;
+            document.getElementById('currentDate').textContent = dateString;
+        }
+
+        async function fetchPrayerTimes() {
+            try {
+                const location = document.getElementById('locationInput').value || 'Tokyo, Japan';
+                const [city, country] = location.split(',').map(s => s.trim());
+                
+                const method = settings.calculationMethod;
+                const response = await fetch(
+                    `https://api.aladhan.com/v1/timingsByCity?city=${city}&country=${country}&method=${method}`
+                );
+                
+                if (!response.ok) throw new Error('Failed to fetch prayer times');
+                
+                const data = await response.json();
+                prayerTimes = data.data.timings;
+                
+                updatePrayerCards();
+                findNextPrayer();
+                
+            } catch (error) {
+                console.error('Error fetching prayer times:', error);
+                document.getElementById('nextPrayerInfo').textContent = 
+                    '⚠️ Unable to fetch prayer times. Please check your internet connection.';
+            }
+        }
+
+        function updatePrayerCards() {
+            const prayerNames = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+            const cardsContainer = document.getElementById('prayerCards');
+            cardsContainer.innerHTML = '';
+            
+            prayerNames.forEach(prayer => {
+                const card = document.createElement('div');
+                card.className = 'prayer-card';
+                card.id = `prayer-${prayer}`;
+                
+                const time = prayerTimes[prayer] || '--:--';
+                
+                card.innerHTML = `
+                    <div class="prayer-name">${prayer}</div>
+                    <div class="prayer-time">${time}</div>
+                    <div class="iqama-time hidden">Iqama: ${addMinutes(time, 10)}</div>
+                `;
+                
+                cardsContainer.appendChild(card);
+            });
+        }
+
+        function findNextPrayer() {
+            const now = new Date();
+            const currentTime = now.getHours() * 60 + now.getMinutes();
+            
+            const prayerNames = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+            let nextPrayer = null;
+            let minDiff = Infinity;
+            
+            // Clear previous timeout
+            if (nextPrayerTimeout) {
+                clearTimeout(nextPrayerTimeout);
+            }
+            
+            // Remove 'next' class from all cards
+            document.querySelectorAll('.prayer-card').forEach(card => {
+                card.classList.remove('next');
+            });
+            
+            prayerNames.forEach(prayer => {
+                const time = prayerTimes[prayer];
+                if (!time) return;
+                
+                const [hours, minutes] = time.split(':').map(Number);
+                const prayerTime = hours * 60 + minutes;
+                let diff = prayerTime - currentTime;
+                
+                if (diff < 0) diff += 1440; // Add 24 hours
+                
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    nextPrayer = { name: prayer, time: time, diff: diff };
+                }
+            });
+            
+            if (nextPrayer) {
+                const hours = Math.floor(nextPrayer.diff / 60);
+                const minutes = nextPrayer.diff % 60;
+                
+                document.getElementById('nextPrayerInfo').textContent = 
+                    `⏰ Next prayer: ${nextPrayer.name} at ${nextPrayer.time} (in ${hours}h ${minutes}m)`;
+                
+                const nextCard = document.getElementById(`prayer-${nextPrayer.name}`);
+                if (nextCard) {
+                    nextCard.classList.add('next');
+                }
+                
+                // Set timeout to play adhan when prayer time arrives
+                if (settings.enableRealTimeAdhan) {
+                    const timeUntilPrayer = nextPrayer.diff * 60 * 1000; // Convert to milliseconds
+                    nextPrayerTimeout = setTimeout(() => {
+                        playAdhan(nextPrayer.name);
+                        // Update to next prayer after current one
+                        setTimeout(findNextPrayer, 1000);
+                    }, timeUntilPrayer);
+                }
+            }
+        }
+
+        function addMinutes(time, mins) {
+            if (!time || time === '--:--') return '--:--';
+            const [h, m] = time.split(':').map(Number);
+            const totalMins = h * 60 + m + mins;
+            const newH = Math.floor(totalMins / 60) % 24;
+            const newM = totalMins % 60;
+            return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`;
+        }
+
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+
+        function playAdhan(prayerName) {
+            console.log(`Playing adhan for ${prayerName}`);
+            
+            // Show notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('🕌 Prayer Time', {
+                    body: `It's time for ${prayerName} prayer`,
+                    icon: '🕌',
+                    requireInteraction: true
+                });
+            }
+            
+            // Play sound
+            if (settings.adhanTone === 'Custom File' && customAdhanAudio) {
+                customAdhanAudio.currentTime = 0;
+                customAdhanAudio.play().catch(e => console.error('Error playing custom adhan:', e));
+            } else {
+                playTone(settings.adhanTone);
+            }
+        }
+
+        function handleAdhanSelection(select) {
+            const customUpload = document.getElementById('customAdhanUpload');
+            if (select.value === 'Custom File') {
+                customUpload.style.display = 'block';
+            } else {
+                customUpload.style.display = 'none';
+                settings.adhanTone = select.value;
+            }
+        }
+
+        function handleAdhanUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size must be less than 10MB');
+                input.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                customAdhanAudio = new Audio(e.target.result);
+                settings.customAdhanFile = e.target.result;
+                settings.customAdhanName = file.name;
+                settings.adhanTone = 'Custom File';
+                
+                // Update select option text
+                const select = document.getElementById('adhanToneSelect');
+                const customOption = select.querySelector('option[value="Custom File"]');
+                if (customOption) {
+                    const fileName = file.name.length > 20 ? file.name.substring(0, 20) + '...' : file.name;
+                    customOption.textContent = `Custom: ${fileName}`;
+                }
+                
+                alert(`Custom adhan "${file.name}" uploaded successfully!`);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleBackgroundSelection(select) {
+            const customUpload = document.getElementById('customBackgroundUpload');
+            if (select.value === 'custom') {
+                customUpload.style.display = 'block';
+            } else {
+                customUpload.style.display = 'none';
+                changeBackground(select.value);
+            }
+        }
+
+        function handleBackgroundUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB');
+                input.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                settings.customBackgroundFile = e.target.result;
+                settings.customBackgroundName = file.name;
+                settings.backgroundImage = 'custom';
+                document.body.style.backgroundImage = `url(${e.target.result})`;
+                document.body.style.backgroundSize = 'cover';
+                document.body.style.backgroundPosition = 'center';
+                document.body.style.backgroundAttachment = 'fixed';
+                
+                // Update select option text
+                const select = document.getElementById('backgroundSelect');
+                const customOption = select.querySelector('option[value="custom"]');
+                if (customOption) {
+                    const fileName = file.name.length > 20 ? file.name.substring(0, 20) + '...' : file.name;
+                    customOption.textContent = `Custom: ${fileName}`;
+                }
+                
+                alert(`Custom background "${file.name}" uploaded successfully!`);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function changeBackground(type) {
+            const body = document.body;
+            
+            if (type === 'custom' && settings.customBackgroundFile) {
+                body.style.backgroundImage = `url(${settings.customBackgroundFile})`;
+                body.style.backgroundSize = 'cover';
+                body.style.backgroundPosition = 'center';
+                body.style.backgroundAttachment = 'fixed';
+                body.style.backgroundRepeat = 'no-repeat';
+            } else if (type && type !== '') {
+                // Get filename from manifest or use fallback
+                const filename = getFilename('image', type);
+                if (filename) {
+                    body.style.backgroundImage = `url("${filename}")`;
+                    body.style.backgroundSize = 'cover';
+                    body.style.backgroundPosition = 'center';
+                    body.style.backgroundAttachment = 'fixed';
+                    body.style.backgroundRepeat = 'no-repeat';
+                    console.log(`Background changed to: ${filename}`);
+                }
+            } else {
+                body.style.backgroundImage = 'none';
+                body.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            }
+        }
+
+        function updateContainerColor() {
+            const color = document.getElementById('containerColorInput').value;
+            const opacity = document.getElementById('containerOpacitySlider').value;
+            settings.containerColor = color;
+            settings.containerOpacity = parseInt(opacity);
+            applyContainerColor();
+        }
+
+        function updateOpacityDisplay(value) {
+            document.getElementById('opacityValue').textContent = value + '%';
+        }
+
+        function applyContainerColor() {
+            const color = settings.containerColor || '#ffffff';
+            const opacity = (settings.containerOpacity || 15) / 100;
+            
+            // Convert hex to RGB
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+            
+            const rgba = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+            
+            // Apply to all container elements
+            const containers = document.querySelectorAll('.current-time-container, .prayer-cards, .info-panel');
+            containers.forEach(container => {
+                container.style.background = rgba;
+            });
+        }
+
+        function changeContainerColor(color, opacity) {
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+            const rgba = `rgba(${r}, ${g}, ${b}, ${opacity / 100})`;
+            
+            const containers = document.querySelectorAll('.current-time-container, .prayer-cards, .info-panel');
+            containers.forEach(container => {
+                container.style.background = rgba;
+            });
+        }
+
+        function toggleVersionMode(mode) {
+            if (mode === 'kiosk') {
+                document.body.classList.add('kiosk-mode');
+            } else {
+                document.body.classList.remove('kiosk-mode');
+            }
+            settings.versionType = mode;
+        }
+
+        function testAdhan() {
+            if (settings.adhanTone === 'Custom File' && customAdhanAudio) {
+                customAdhanAudio.currentTime = 0;
+                customAdhanAudio.play().catch(e => console.error('Error playing custom adhan:', e));
+            } else {
+                playTone(settings.adhanTone);
+            }
+        }
+
+        function playTone(toneType) {
+            // Get filename from manifest or use fallback
+            const audioPath = getFilename('sound', toneType);
+            
+            if (audioPath) {
+                const audio = new Audio(audioPath);
+                audio.volume = 0.7;
+                audio.play().catch(e => {
+                    console.error('Error playing adhan:', e);
+                    showMessage(`Error playing ${toneType} adhan. File may not exist: ${audioPath}`, 'error');
+                });
+                
+                console.log(`Playing ${toneType} adhan from ${audioPath}`);
+                showMessage(`Playing ${toneType} adhan`, 'success');
+            } else {
+                console.error(`Unknown tone type: ${toneType}`);
+                showMessage(`Unknown adhan type: ${toneType}`, 'error');
+            }
+        }
+        
+        // Helper function to show messages
+        function showMessage(text, type = 'info') {
+            const testMessage = document.createElement('div');
+            const bgColor = type === 'error' ? '#d32f2f' : type === 'success' ? '#2c5364' : '#1976d2';
+            testMessage.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${bgColor};
+                color: white;
+                padding: 10px 20px;
+                border-radius: 5px;
+                z-index: 2000;
+                font-size: 14px;
+            `;
+            testMessage.textContent = text;
+            document.body.appendChild(testMessage);
+            
+            setTimeout(() => {
+                if (document.body.contains(testMessage)) {
+                    document.body.removeChild(testMessage);
+                }
+            }, 2500);
+        }
+
+        // Settings functions
+        function openSettings() {
+            document.getElementById('settingsModal').style.display = 'block';
+            updateSettingsUI();
+        }
+
+        function updateSettingsUI() {
+            const timezoneSelect = document.getElementById('timezoneSelect');
+            const autoUpdateToggle = document.getElementById('autoUpdateToggle');
+            const realTimeAdhanToggle = document.getElementById('realTimeAdhanToggle');
+            const calculationMethod = document.getElementById('calculationMethod');
+            const backgroundSelect = document.getElementById('backgroundSelect');
+            const versionSelect = document.getElementById('versionSelect');
+            const containerColorInput = document.getElementById('containerColorInput');
+            const containerOpacitySlider = document.getElementById('containerOpacitySlider');
+            
+            if (timezoneSelect) timezoneSelect.value = settings.timezone;
+            if (autoUpdateToggle) autoUpdateToggle.checked = settings.autoUpdate;
+            if (realTimeAdhanToggle) realTimeAdhanToggle.checked = settings.enableRealTimeAdhan;
+            if (calculationMethod) calculationMethod.value = settings.calculationMethod;
+            if (backgroundSelect) backgroundSelect.value = settings.backgroundImage || '';
+            if (versionSelect) versionSelect.value = settings.versionType || 'home';
+            if (containerColorInput) containerColorInput.value = settings.containerColor || '#ffffff';
+            if (containerOpacitySlider) containerOpacitySlider.value = settings.containerOpacity || 15;
+            
+            // Update opacity display
+            const opacityValue = document.getElementById('opacityValue');
+            if (opacityValue) {
+                opacityValue.textContent = (settings.containerOpacity || 15) + '%';
+            }
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('prayerSettings');
+            if (saved) {
+                const savedSettings = JSON.parse(saved);
+                settings = { ...settings, ...savedSettings };
+                
+                // Apply saved settings
+                if (settings.backgroundImage) {
+                    changeBackground(settings.backgroundImage);
+                }
+                if (settings.containerColor && settings.containerOpacity) {
+                    // Apply container color after DOM is ready
+                    setTimeout(() => {
+                        changeContainerColor(settings.containerColor, settings.containerOpacity);
+                    }, 100);
+                }
+                
+                // Apply version mode
+                if (settings.versionType === 'kiosk') {
+                    document.body.classList.add('kiosk-mode');
+                }
+                
+                // Show file persistence message if custom files were previously selected
+                setTimeout(() => {
+                    if (settings.customBackgroundName || settings.customAdhanName) {
+                        showFilePersistenceMessage();
+                    }
+                    
+                    // Restore adhan selector if custom file was selected
+                    if (settings.adhanTone === 'Custom File' && settings.customAdhanName) {
+                        const select = document.getElementById('adhanToneSelect');
+                        if (select) {
+                            select.value = 'Custom File';
+                            let customOption = select.querySelector('option[value="Custom File"]');
+                            if (customOption) {
+                                const fileName = settings.customAdhanName.length > 20 
+                                    ? settings.customAdhanName.substring(0, 20) + '...' 
+                                    : settings.customAdhanName;
+                                customOption.textContent = `Custom: ${fileName} (re-select)`;
+                            }
+                        }
+                    }
+                    
+                    // Restore background selector if custom file was selected
+                    if (settings.backgroundImage === 'custom' && settings.customBackgroundName) {
+                        const select = document.getElementById('backgroundSelect');
+                        if (select) {
+                            let customOption = select.querySelector('option[value="custom"]');
+                            if (customOption) {
+                                const fileName = settings.customBackgroundName.length > 20 
+                                    ? settings.customBackgroundName.substring(0, 20) + '...' 
+                                    : settings.customBackgroundName;
+                                customOption.textContent = `Custom: ${fileName} (re-select)`;
+                            }
+                        }
+                    }
+                }, 500);
+            }
+        }
+
+        function showFilePersistenceMessage() {
+            const message = document.createElement('div');
+            message.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #ff9a56 0%, #ff6b6b 100%);
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                z-index: 2000;
+                font-size: 13px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                max-width: 300px;
+                line-height: 1.4;
+            `;
+            message.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 5px;">📁 File Selection Reminder</div>
+                <div style="font-size: 12px;">Your previously selected custom files need to be re-selected after page refresh. Check settings to re-upload your files.</div>
+            `;
+            document.body.appendChild(message);
+            
+            // Auto-remove after 8 seconds
+            setTimeout(() => {
+                if (document.body.contains(message)) {
+                    document.body.removeChild(message);
+                }
+            }, 8000);
+        }
+
+        function saveSettings() {
+            settings.timezone = document.getElementById('timezoneSelect').value;
+            settings.autoUpdate = document.getElementById('autoUpdateToggle').checked;
+            settings.enableRealTimeAdhan = document.getElementById('realTimeAdhanToggle').checked;
+            settings.calculationMethod = parseInt(document.getElementById('calculationMethod').value);
+            settings.backgroundImage = document.getElementById('backgroundSelect').value;
+            
+            // Save color settings
+            settings.containerColor = document.getElementById('containerColorInput').value;
+            settings.containerOpacity = parseInt(document.getElementById('containerOpacitySlider').value);
+            
+            localStorage.setItem('prayerSettings', JSON.stringify(settings));
+            
+            // Update prayer cards immediately after saving settings
+            updatePrayerCards();
+            findNextPrayer();
+            
+            alert('Settings saved successfully!');
+            closeSettings();
+        }
+
+        function resetSettings() {
+            settings = {
+                timezone: 'auto',
+                autoUpdate: true,
+                calculationMethod: 5,
+                adhanEnabled: true,
+                versionType: 'home',
+                containerColor: '#ffffff',
+                containerOpacity: 15
+            };
+            localStorage.removeItem('prayerSettings');
+            document.body.classList.remove('kiosk-mode');
+            updateSettingsUI();
+            updatePrayerCards();
+            applyContainerColor();
+            changeBackground('');
+            if (settings.autoUpdate) {
+                fetchPrayerTimes();
+            }
+        }
+
+        function shutdownSystem() {
+            if (confirm('Are you sure you want to shutdown the system?')) {
+                alert('System shutdown requested');
+            }
+        }
+
+        function restartSystem() {
+            if (confirm('Are you sure you want to restart the system?')) {
+                location.reload();
+            }
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('settingsModal');
+            if (event.target === modal) {
+                closeSettings();
+            }
+        }
+    </script>
+</body>
+</html>
