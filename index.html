@@ -318,6 +318,39 @@ html.fill.portrait.lay-split .p-iqama{font-size:2.1rem}
 
 
 /* ---- layout: sunpath ---- */
+/* Sun path: the sun's arc from Tulu' to sunset with today's prayers and the Makruh windows marked on it. */
+.sunpath{display:none; grid-area:sun; padding:.6rem .9rem}
+html.lay-sunpath .sunpath{display:block}
+.sunpath svg{display:block; width:100%; height:auto; max-height:100%; overflow:visible}
+.sp-horizon{stroke:var(--panel-border); stroke-width:2}
+.sp-path{stroke:var(--faint); stroke-width:3; stroke-dasharray:6 8; fill:none}
+.sp-done{stroke:var(--accent); stroke-width:5; fill:none; stroke-linecap:round}
+.sp-mk{stroke:#ff4d4f; stroke-width:11; fill:none; stroke-linecap:round; opacity:.9}
+.sp-dot{fill:var(--text)}
+.sp-sun{fill:var(--warn)}
+.sp-halo{fill:none; stroke:var(--warn); stroke-width:3; opacity:.45}
+.sp-moon{fill:var(--muted)}
+.sp-label{fill:var(--text); font-size:22px; font-weight:700; paint-order:stroke; stroke:rgba(0,0,0,.35); stroke-width:5px; stroke-linejoin:round}
+.sp-small{fill:var(--muted); font-size:19px}
+.sp-key{fill:#ff4d4f}
+html.lay-sunpath .main{grid-template-areas:"hero" "next" "sun" "prayers"}
+@media (min-width:860px){ html:not(.fill).lay-sunpath .main{grid-template-columns:1.15fr 1fr; grid-template-areas:"sun sun" "hero next" "prayers prayers"} }
+html.fill.lay-sunpath .main{grid-template-columns:minmax(0,1.9fr) minmax(0,1fr); grid-template-rows:minmax(0,1fr) minmax(0,1fr) auto; grid-template-areas:"sun hero" "sun next" "prayers prayers"}
+html.fill.lay-sunpath .sunpath{display:flex; align-items:center; min-height:0}
+html.fill.lay-sunpath .clock{font-size:3.8rem}
+html.fill.lay-sunpath .hero, html.fill.lay-sunpath .next-panel{padding-block:.6rem; min-height:0}
+html.fill.lay-sunpath .dates{flex-direction:column; align-items:center; gap:.1rem; font-size:.85rem}
+html.fill.lay-sunpath .np-name{font-size:1.7rem} html.fill.lay-sunpath .np-ar{font-size:1.4rem}
+html.fill.lay-sunpath .next-panel{gap:.15rem}
+html.fill.lay-sunpath .np-count{font-size:2.7rem}
+html.fill.lay-sunpath .np-at{font-size:.85rem}
+html.fill.lay-sunpath .prayers{padding:.5rem; gap:.5rem}
+html.fill.lay-sunpath .p-row{padding:.35rem .4rem; gap:.05rem}
+html.fill.lay-sunpath .p-name{font-size:1.1rem} html.fill.lay-sunpath .p-ar{font-size:1rem}
+html.fill.lay-sunpath .p-adhan{font-size:1.55rem} html.fill.lay-sunpath .p-iqama{font-size:.9rem}
+html.fill.lay-sunpath .p-row.sunrise .p-adhan{font-size:1.4rem}
+html.fill.portrait.lay-sunpath .main{grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-rows:auto auto 1fr; grid-template-areas:"hero next" "sun sun" "prayers prayers"}
+
 
 /* ---- focus mode ---- */
 /* Mosque only, from the adhan until the Iqama. The other times shrink to one line at the bottom. */
@@ -633,6 +666,8 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
       <span class="sr-only" id="npLive" aria-live="polite"></span>
     </section>
 
+    <section class="panel sunpath" id="sunPath" aria-label="The sun's path today"><svg id="sunSvg" viewBox="0 0 1000 340" role="img" aria-labelledby="sunDesc"><desc id="sunDesc">The sun's path today</desc></svg></section>
+
     <ul class="panel prayers" id="prayers" aria-label="Today's prayer times"></ul>
   </main>
 
@@ -829,6 +864,7 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
             <!-- layout option: split -->
             <option value="split">Split: clock on one half, the prayer list on the other</option>
             <!-- layout option: sunpath -->
+            <option value="sunpath">Sun path: the sun's arc with today's prayers and Makruh times</option>
           </select>
           <p class="hint">Used in both Home and Mosque mode.</p></div>
         <!-- focus settings -->
@@ -1812,6 +1848,63 @@ function applyAuto(focus, night) {
   R.classList.toggle('night', !!night);
 }
 
+/* -------------------------------------------------------------- sun path */
+const SVGNS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs = {}, text) { const n = document.createElementNS(SVGNS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); if (text != null) n.textContent = text; return n; }
+/** Points of the sun-path arc for today: sunrise → sunset (Maghrib) as a half sine. Pure — used by the drawing and the tests. */
+function sunGeom(day, s = V) {
+  const ev = k => day.events.find(e => e.key === k);
+  const sr = ev('Sunrise'), mg = ev('Maghrib'); if (!sr || !mg || mg.adhan <= sr.adhan) return null;
+  const X0 = 80, X1 = 920, BASE = 275, H = 195;
+  const pt = t => { const k = Math.min(1, Math.max(0, (t - sr.adhan) / (mg.adhan - sr.adhan))); return [X0 + k * (X1 - X0), BASE - Math.sin(Math.PI * k) * H]; };
+  const mk = [];
+  if (s.display.makruh) {
+    mk.push([sr.adhan, sr.adhan + makruhMs(s)], [mg.adhan - makruhMs(s), mg.adhan]);
+    if (s.display.zawal && day.zawal && !(day.fri && s.display.zawalSkipFriday)) mk.push([day.zawal - zawalMs(s), day.zawal]);
+  }
+  return { sr, mg, pt, mk, X0, X1, BASE };
+}
+let sunSig = '';
+function drawSunPath(day, nowMs) {
+  const svg = $('#sunSvg'); if (!svg || V.display.layout !== 'sunpath') return;
+  const h24 = V.display.clock24;
+  const sig = [day && day.key, Math.floor(nowMs / 60000), version, h24, V.display.makruh, V.display.makruhMin, V.display.zawal, V.display.zawalMin, V.display.zawalSkipFriday, V.display.showArabic].join('|');
+  if (sig === sunSig) return; sunSig = sig;
+  for (const n of [...svg.querySelectorAll('g')]) n.remove();
+  const g = svgEl('g'); svg.append(g);
+  const G = day && sunGeom(day); if (!G) return;
+  const { sr, mg, pt, X0, X1, BASE } = G;
+  const arc = (a, b) => { let d = ''; const step = Math.max(60000, (b - a) / 80); for (let t = a; ; t += step) { const p = pt(Math.min(t, b)); d += (d ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); if (t >= b) break; } return d; };
+  g.append(svgEl('line', { class: 'sp-horizon', x1: 20, y1: BASE, x2: 980, y2: BASE }));
+  g.append(svgEl('path', { class: 'sp-path', d: arc(sr.adhan, mg.adhan) }));
+  const day0 = nowMs >= sr.adhan && nowMs <= mg.adhan;
+  if (nowMs > sr.adhan) g.append(svgEl('path', { class: 'sp-done', d: arc(sr.adhan, Math.min(nowMs, mg.adhan)) }));
+  for (const [a, b] of G.mk) g.append(svgEl('path', { class: 'sp-mk', d: arc(a, b) }));
+  const ev = k => day.events.find(e => e.key === k);
+  // [label, time, text-anchor, dx, dy]: Dhuhr's label clears the sun's halo; Ishraq and Maghrib sit inside the arc, away from the red segments
+  const marks = [['Ishraq', sr.adhan + makruhMs(), 'start', 22, 8], [LABEL[(ev('Dhuhr') || {}).name || 'Dhuhr'], (ev('Dhuhr') || {}).adhan, 'middle', 0, -50], ['Asr', (ev('Asr') || {}).adhan, 'start', 16, -16], ['Maghrib', mg.adhan, 'end', -26, -34]];
+  for (const [name, t, anchor, dx, dy] of marks) {
+    if (!t) continue; const [x, y] = pt(t);
+    g.append(svgEl('circle', { class: 'sp-dot', cx: x, cy: y, r: 7 }));
+    g.append(svgEl('text', { class: 'sp-label', x: x + dx, y: y + dy, 'text-anchor': anchor }, `${name} ${timeStr(t, h24)}`));
+  }
+  g.append(svgEl('text', { class: 'sp-small', x: X0 + 10, y: BASE + 36 }, `Tulu' ${timeStr(sr.adhan, h24)}`));
+  g.append(svgEl('text', { class: 'sp-small', x: X1 - 10, y: BASE + 36, 'text-anchor': 'end' }, `Sunset ${timeStr(mg.adhan, h24)}`));
+  const fj = ev('Fajr'), is = ev('Isha');
+  if (fj) g.append(svgEl('text', { class: 'sp-small', x: 20, y: BASE + 64 }, `Fajr ${timeStr(fj.adhan, h24)}`));
+  if (is) g.append(svgEl('text', { class: 'sp-small', x: 980, y: BASE + 64, 'text-anchor': 'end' }, `Isha ${timeStr(is.adhan, h24)}`));
+  if (G.mk.length) { g.append(svgEl('rect', { class: 'sp-key', x: 20, y: 14, width: 14, height: 14, rx: 3 })); g.append(svgEl('text', { class: 'sp-small', x: 42, y: 27 }, 'Makruh')); }
+  if (day0) {
+    const [x, y] = pt(nowMs);
+    g.append(svgEl('circle', { class: 'sp-halo', cx: x, cy: y, r: 38 }));
+    g.append(svgEl('circle', { class: 'sp-sun', cx: x, cy: y, r: 26 }));
+  } else {
+    // Night: a crescent at the top of the sky instead of the sun
+    g.append(svgEl('path', { class: 'sp-moon', d: 'M200 34 A26 26 0 1 0 200 86 A19 26 0 1 1 200 34 Z' }));
+    g.append(svgEl('text', { class: 'sp-small', x: 236, y: 68 }, 'Night'));
+  }
+}
+
 /* ------------------------------------------------------------- main loop */
 function tick() {
   const now = wallNow(currentTz());
@@ -1826,6 +1919,7 @@ function tick() {
 
   const { next, tomorrow, current, sunriseEv, afterSunrise, yMid } = prayerState(now.ms, sc);
   const mk = makruhAt(now.ms, sc);
+  drawSunPath(sc.today, now.ms);
   applyAuto(ov ? null : focusAt(now.ms, sc), nightAt(now.ms, sc));   // Focus waits until the adhan screen closes
 
   // Row states

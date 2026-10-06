@@ -22,7 +22,7 @@ const ctx={console:{log(){},info(){},warn(){},error:(...a)=>errors.push(a.join('
 ctx.window=ctx; vm.createContext(ctx);
 process.on('unhandledRejection',e=>errors.push('UNHANDLED '+(e&&e.stack||e)));
 mem['pr.settings.v2']=JSON.stringify({configured:true,location:{mode:'city',city:'London',country:'United Kingdom'},display:{mode:'home'}});
-try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,hideOverlay,schedule,wallNow,currentTz,prayerState,makruhAt,focusAt,nightAt,hijriOf,checkAlerts,installState,diagnostics,logError,flushOutbox,postFeedback,get firedKeys(){return fired.keys},resetFired(){fired={day:'',keys:[]}},get settings(){return settings},applyVisual,onAdhan,onIqama,onReminder,refreshManifest,compareWithAladhan,sourceInfo};`,ctx);}catch(e){errors.push('SYNC '+e.stack)}
+try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,hideOverlay,schedule,wallNow,currentTz,prayerState,makruhAt,focusAt,nightAt,sunGeom,hijriOf,checkAlerts,installState,diagnostics,logError,flushOutbox,postFeedback,get firedKeys(){return fired.keys},resetFired(){fired={day:'',keys:[]}},get settings(){return settings},applyVisual,onAdhan,onIqama,onReminder,refreshManifest,compareWithAladhan,sourceInfo};`,ctx);}catch(e){errors.push('SYNC '+e.stack)}
 (async()=>{
  for(let i=0;i<5;i++) await new Promise(r=>setImmediate(r));
  const T=ctx.__T; let ok=0,bad=0; const eq=(a,b,m)=>{const p=JSON.stringify(a)===JSON.stringify(b);p?ok++:bad++;console.log((p?'PASS ':'FAIL ')+m+(p?'':`  got ${JSON.stringify(a)} exp ${JSON.stringify(b)}`))};
@@ -87,6 +87,13 @@ try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,
  try{ T.settings.display.layout='split'; T.applyVisual(T.settings); T.tick(); eq(true,true,'Split layout builds'); }catch(e){ eq(e.message,null,'Split layout builds'); } finally{ T.settings.display.layout='classic'; T.applyVisual(T.settings); T.tick(); }
 
  // ---- tests: sunpath ----
+ // Sun path geometry
+ { const d=sc('2026-10-05').today, G=T.sunGeom(d,T.settings); const sr=d.events.find(e=>e.key==='Sunrise'), mg=d.events.find(e=>e.key==='Maghrib');
+   const p0=G.pt(sr.adhan), p1=G.pt(mg.adhan), pm=G.pt((sr.adhan+mg.adhan)/2);
+   eq([p0[0],p0[1],p1[0],p1[1],Math.round(pm[1])],[G.X0,G.BASE,G.X1,G.BASE,G.BASE-195],'Sun path: arc from Tulu\' to sunset, highest half-way');
+   const nz=JSON.parse(JSON.stringify(T.settings)); nz.display.zawal=false; const nm2=JSON.parse(JSON.stringify(T.settings)); nm2.display.makruh=false;
+   eq([G.mk.length,T.sunGeom(d,nz).mk.length,T.sunGeom(d,nm2).mk.length],[3,2,0],'Sun path: three Makruh windows (two without Zawal, none when Makruh is off)'); }
+ try{ T.settings.display.layout='sunpath'; T.applyVisual(T.settings); T.tick(); eq(true,true,'Sun path layout builds'); }catch(e){ eq(e.message,null,'Sun path layout builds'); } finally{ T.settings.display.layout='classic'; T.applyVisual(T.settings); T.tick(); }
 
  // feedback
  T.logError('audio','NotAllowedError: play() failed'); T.logError('audio','NotAllowedError: play() failed');
