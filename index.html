@@ -547,6 +547,31 @@ input[type=color]{width:52px; height:44px; padding:2px; border-radius:10px; bord
   .pt-iq{grid-column:1/-1}
 }
 
+.lp-tiles{display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:10px; margin-top:10px}
+.lp-tiles.small{grid-template-columns:repeat(auto-fill, minmax(112px, 1fr))}
+@media (max-width:560px){ .lp-tiles, .lp-tiles.small{grid-template-columns:1fr 1fr} }
+.lp-tile{position:relative; display:block; cursor:pointer}
+.lp-tile input{position:absolute; opacity:0; inset:0; margin:0; cursor:pointer}
+.lp-box{position:relative; display:grid; align-content:start; gap:5px; height:100%; padding:8px 8px 10px; border:2px solid #e5e7eb; border-radius:12px; background:#fff}
+.lp-tile:hover .lp-box{border-color:#c7cdf9}
+.lp-tile input:checked + .lp-box{border-color:#5b6cf0; background:#eef0ff; box-shadow:0 0 0 3px rgba(91,108,240,.25)}
+.lp-tile input:checked + .lp-box::after{content:"✓"; position:absolute; top:6px; right:6px; width:22px; height:22px; border-radius:50%; background:#5b6cf0; color:#fff; display:grid; place-items:center; font-weight:800; font-size:13px}
+.lp-tile input:focus-visible + .lp-box{outline:3px solid #5b6cf0; outline-offset:2px}
+.lp-ic svg, .lp-nightic svg{display:block; width:100%; height:auto; border-radius:6px}
+.lp-tiles.portrait .lp-ic svg{width:60%; margin:0 auto}
+.lp-nm{font-weight:700; font-size:.9em; color:#111827}
+.lp-ds{font-size:.78em; color:#6b7280; line-height:1.3}
+.lp-sub{border-top:1px solid #e5e7eb; margin-top:14px; padding-top:4px}
+.lp-night{display:flex; gap:12px; align-items:flex-end; margin-top:12px}
+.lp-night .field{flex:1; min-width:0}
+.lp-nightic{flex:none; width:110px}
+/* Focus / Night preview: the dialog hides (keeping unsaved changes) and only this bar stays */
+.vp-bar{display:none; position:fixed; left:50%; top:max(16px, env(safe-area-inset-top)); transform:translateX(-50%); z-index:5; align-items:center; gap:12px;
+  padding:8px 8px 8px 16px; border-radius:999px; background:rgba(17,24,39,.92); color:#fff; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.4); visibility:visible; white-space:nowrap}
+dialog.settings.view-preview{visibility:hidden; box-shadow:none}
+dialog.settings.view-preview::backdrop{background:transparent}
+dialog.settings.view-preview .vp-bar{display:flex}
+html.focus-c dialog.settings .vp-bar{top:auto; bottom:max(16px, env(safe-area-inset-bottom))}   /* Focus C keeps its small clock at the top */
 .bg-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(118px, 1fr)); gap:10px; margin-top:10px}
 .bg-opt{position:relative; padding:0; border:2px solid transparent; border-radius:12px; overflow:hidden; background:#e5e7eb; aspect-ratio:4/3; display:block}
 .bg-opt img{width:100%; height:100%; object-fit:cover; display:block}
@@ -704,6 +729,7 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
 
 <!-- ======================= Settings ======================= -->
 <dialog class="settings" id="settings" aria-labelledby="sTitle">
+  <div class="vp-bar" role="status"><span id="vpText">Preview</span><button class="sbtn small" type="button" id="vpStop">Stop preview</button></div>
   <div class="s-head">
     <h2 id="sTitle">Settings</h2>
     <button class="s-close" type="button" id="sClose" aria-label="Close settings without saving"><svg aria-hidden="true"><use href="#i-x"/></svg></button>
@@ -856,35 +882,38 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
     <div class="s-panel" role="tabpanel" id="pan-display" aria-labelledby="tab-display" hidden>
       <section class="card" id="layoutCard">
         <h3>Layout</h3>
-        <div class="field"><label for="fLayout">Screen layout</label>
-          <select class="sel" id="fLayout" data-k="display.layout">
-            <option value="classic">Classic: clock, next prayer and a row of prayer cards</option>
-            <!-- layout option: board -->
-            <option value="board">Mosque board: timetable with Adhan and Iqama columns</option>
-            <!-- layout option: split -->
-            <option value="split">Split: clock on one half, the prayer list on the other</option>
-            <!-- layout option: sunpath -->
-            <option value="sunpath">Sun path: the sun's arc with today's prayers and Makruh times</option>
-          </select>
-          <p class="hint">Used in both Home and Mosque mode.</p></div>
-        <!-- focus settings -->
-        <div data-show="display.mode=mosque">
-          <label class="sw"><input type="checkbox" data-k="display.focus"><span class="track"></span><span class="txt">Focus mode from Adhan to Iqama<small>After the adhan screen closes, the screen switches to a large, simple view until the Iqama, then returns to the layout above.</small></span></label>
-          <div class="field" data-show="display.focus=true"><label for="fFocus">Focus layout</label>
-            <select class="sel" id="fFocus" data-k="display.focusLayout">
-              <option value="a">A: clock and countdown side by side</option>
-              <option value="b">B: large clock with the countdown underneath</option>
-              <option value="c">C: countdown only, small clock</option>
-            </select></div>
+        <div class="lp-tiles" id="layoutTiles" role="radiogroup" aria-label="Screen layout">
+            <label class="lp-tile"><input type="radio" name="layout" value="classic" data-k="display.layout"><span class="lp-box"><span class="lp-ic" data-icon="classic" aria-hidden="true"></span><span class="lp-nm">Classic</span><span class="lp-ds">Clock, next prayer and a row of cards</span></span></label>
+            <label class="lp-tile"><input type="radio" name="layout" value="board" data-k="display.layout"><span class="lp-box"><span class="lp-ic" data-icon="board" aria-hidden="true"></span><span class="lp-nm">Mosque board</span><span class="lp-ds">Timetable with Adhan and Iqama columns</span></span></label>
+            <label class="lp-tile"><input type="radio" name="layout" value="split" data-k="display.layout"><span class="lp-box"><span class="lp-ic" data-icon="split" aria-hidden="true"></span><span class="lp-nm">Split</span><span class="lp-ds">Clock on one half, the list on the other</span></span></label>
+            <label class="lp-tile"><input type="radio" name="layout" value="sunpath" data-k="display.layout"><span class="lp-box"><span class="lp-ic" data-icon="sunpath" aria-hidden="true"></span><span class="lp-nm">Sun path</span><span class="lp-ds">The sun's arc with prayers and Makruh times</span></span></label>
         </div>
-        <!-- night settings -->
-        <div class="field"><label for="fNight">Night view after Isha</label>
-          <select class="sel" id="fNight" data-k="display.night">
-            <option value="auto">Automatic: on for Mosque screens only</option>
-            <option value="on">On for this screen</option>
-            <option value="off">Off</option>
-          </select>
-          <p class="hint">From Isha's Iqama until the Fajr adhan the screen turns near-black with dim amber text. Alerts, the Fajr adhan and announcements work as usual.</p></div>
+        <p class="hint">Used in both Home and Mosque mode. The screen behind Settings shows your choice straight away.</p>
+        <div class="lp-sub" data-show="display.mode=mosque">
+          <label class="sw"><input type="checkbox" data-k="display.focus"><span class="track"></span><span class="txt">Focus mode from Adhan to Iqama<small>After the adhan screen closes, the screen switches to a large, simple view until the Iqama, then returns to the layout above.</small></span></label>
+          <div data-show="display.focus=true">
+            <div class="lp-tiles small" role="radiogroup" aria-label="Focus layout">
+            <label class="lp-tile"><input type="radio" name="focusLayout" value="a" data-k="display.focusLayout"><span class="lp-box"><span class="lp-ic" data-icon="a" aria-hidden="true"></span><span class="lp-nm">A</span><span class="lp-ds">Clock and countdown side by side</span></span></label>
+            <label class="lp-tile"><input type="radio" name="focusLayout" value="b" data-k="display.focusLayout"><span class="lp-box"><span class="lp-ic" data-icon="b" aria-hidden="true"></span><span class="lp-nm">B</span><span class="lp-ds">Large clock, countdown below</span></span></label>
+            <label class="lp-tile"><input type="radio" name="focusLayout" value="c" data-k="display.focusLayout"><span class="lp-box"><span class="lp-ic" data-icon="c" aria-hidden="true"></span><span class="lp-nm">C</span><span class="lp-ds">Countdown only</span></span></label>
+            </div>
+            <div class="btn-row"><button class="sbtn small" type="button" data-viewprev="focus">▶ Preview Focus for 30 seconds</button></div>
+            <p class="hint">Outside prayer time the preview counts down to the next adhan; the real view counts down to the Iqama.</p>
+          </div>
+        </div>
+        <div class="lp-sub">
+          <div class="lp-night">
+            <div class="field" style="margin-top:0"><label for="fNight">Night view after Isha</label>
+              <select class="sel" id="fNight" data-k="display.night">
+                <option value="auto">Automatic: on for Mosque screens only</option>
+                <option value="on">On for this screen</option>
+                <option value="off">Off</option>
+              </select></div>
+            <span class="lp-nightic" id="nightIcon" aria-hidden="true"></span>
+          </div>
+          <p class="hint">From Isha's Iqama until the Fajr adhan the screen turns near-black with dim amber text. Alerts, the Fajr adhan and announcements work as usual.</p>
+          <div class="btn-row"><button class="sbtn small" type="button" data-viewprev="night">▶ Preview Night for 30 seconds</button></div>
+        </div>
       </section>
       <section class="card">
         <h3>Mode</h3>
@@ -1911,7 +1940,7 @@ function tick() {
   if (now.key !== lastKey) { lastKey = now.key; ensureData(); rowsSig = ''; }
   renderClock(now);
   const sc = schedule(now.key, V);
-  if (!sc.today) { renderHijri(null); renderEmpty(); applyAuto(null, false); overlayTick(now); return; }
+  if (!sc.today) { renderHijri(null); renderEmpty(); applyAuto(null, false); if (viewPreview) endViewPreview(); overlayTick(now); return; }
   renderHijri(sc.today);
 
   const sig = `${now.key}|${version}|${R.classList.contains('show-iqama')}|${V.display.showSunrise}|${V.display.clock24}|${V.display.makruhMin}|${V.display.layout}`;
@@ -1920,7 +1949,9 @@ function tick() {
   const { next, tomorrow, current, sunriseEv, afterSunrise, yMid } = prayerState(now.ms, sc);
   const mk = makruhAt(now.ms, sc);
   drawSunPath(sc.today, now.ms);
-  applyAuto(ov ? null : focusAt(now.ms, sc), nightAt(now.ms, sc));   // Focus waits until the adhan screen closes
+  const pv = viewPreviewAt(Date.now()); if (viewPreview && !pv) return endViewPreview();
+  applyAuto(pv === 'focus' ? V.display.focusLayout : ov ? null : focusAt(now.ms, sc), pv === 'night' || nightAt(now.ms, sc));   // Focus waits until the adhan screen closes
+  if (pv) setText($('#vpText'), `Preview · ends in ${fmtDur(viewPreview.until - Date.now())}`);
 
   // Row states
   for (const li of $$('#prayers .p-row')) {
@@ -2208,6 +2239,76 @@ async function handleBgFile(file) {
 
 /* ================================================================ SETTINGS */
 const dlg = $('#settings');
+
+/* ---- layout picker icons (drawn, ~1 KB each; only while Settings is open) ---- */
+// [x, y, w, h, kind] on a 160×90 canvas (P: 90×160 portrait). b block · h next-prayer panel · big clock digits · hbig countdown digits · l list · r card row · arc sun path · strip time strip
+const LAYOUT_ICONS = {
+  classic: { L: [[6, 6, 84, 48, 'big'], [96, 6, 58, 48, 'h'], [6, 60, 148, 24, 'r']], P: [[6, 6, 78, 38, 'big'], [6, 50, 78, 30, 'h'], [6, 86, 78, 68, 'l']] },
+  board: { L: [[6, 6, 96, 78, 'l'], [108, 6, 46, 36, 'big'], [108, 48, 46, 36, 'h']], P: [[6, 6, 37, 32, 'big'], [47, 6, 37, 32, 'h'], [6, 44, 78, 110, 'l']] },
+  split: { L: [[6, 6, 72, 48, 'big'], [6, 60, 72, 24, 'h'], [84, 6, 70, 78, 'l']], P: [[6, 6, 78, 48, 'big'], [6, 60, 78, 18, 'h'], [6, 84, 78, 70, 'l']] },
+  sunpath: { L: [[6, 6, 98, 54, 'arc'], [110, 6, 44, 26, 'big'], [110, 36, 44, 24, 'h'], [6, 66, 148, 18, 'r']], P: [[6, 6, 37, 30, 'big'], [47, 6, 37, 30, 'h'], [6, 42, 78, 44, 'arc'], [6, 92, 78, 62, 'l']] },
+  a: { L: [[6, 6, 72, 64, 'big'], [82, 6, 72, 64, 'h'], [6, 76, 148, 8, 'strip']] },
+  b: { L: [[6, 6, 148, 46, 'big'], [16, 58, 128, 14, 'h'], [6, 78, 148, 6, 'strip']] },
+  c: { L: [[60, 4, 40, 10, 'b'], [16, 20, 128, 50, 'hbig'], [6, 78, 148, 6, 'strip']] }
+};
+/** SVG markup for a layout icon. Pure — used by Settings and the tests. */
+function layoutIconSvg(key, portrait = false, night = false) {
+  const def = LAYOUT_ICONS[key]; if (!def) return '';
+  const shapes = (portrait && def.P) || def.L; const P = shapes === def.P, W = P ? 90 : 160, H = P ? 160 : 90;
+  const C = night ? { bg: '#07080c', box: '#0d0e12', hiBox: '#1a140f', fg: '#3a2f25', hi: '#8a6a48', dig: '#8a6a48', row: '#14110e', sun: '#6d5845' }
+    : { bg: '#f3f5fa', box: '#e6eaf3', hiBox: '#e3e7ff', fg: '#9aa6c4', hi: '#5b6cf0', dig: '#6b7896', row: '#ffffff', sun: '#f5b83d' };
+  const r = (x, y, w, h, a = '') => `<rect x="${+x.toFixed(1)}" y="${+y.toFixed(1)}" width="${+w.toFixed(1)}" height="${+h.toFixed(1)}" ${a}/>`;
+  let o = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">` + r(0, 0, W, H, `rx="6" fill="${C.bg}"`);
+  for (const [x, y, w, h, k] of shapes) {
+    if (k === 'arc') {
+      const bx = x + 6, ex = x + w - 6, by = y + h - 7;
+      o += r(x, y, w, h, `rx="4" fill="${C.box}"`) + `<path d="M${bx} ${by} Q${(bx + ex) / 2} ${y - h * .27} ${ex} ${by}" fill="none" stroke="${C.hi}" stroke-width="2.2"/>`
+        + `<line x1="${x + 3}" y1="${by}" x2="${x + w - 3}" y2="${by}" stroke="${C.fg}"/>`
+        + `<line x1="${bx}" y1="${by}" x2="${bx + 7}" y2="${by - 6}" stroke="#e5484d" stroke-width="3" stroke-linecap="round"/><line x1="${ex - 7}" y1="${by - 6}" x2="${ex}" y2="${by}" stroke="#e5484d" stroke-width="3" stroke-linecap="round"/>`
+        + `<circle cx="${(x + w * .64).toFixed(1)}" cy="${(y + 8 + h * .12).toFixed(1)}" r="${(Math.min(w, h) * .09).toFixed(1)}" fill="${C.sun}"/>`;
+      continue;
+    }
+    if (k === 'strip') { const cw = (w - 36) / 5; for (let i = 0; i < 5; i++) o += r(x + 18 + i * cw, y, cw - 8, h, `rx="2" fill="${C.fg}" opacity=".7"`); continue; }
+    const hiK = k === 'h' || k === 'hbig';
+    o += r(x, y, w, h, `rx="4" fill="${hiK ? C.hiBox : C.box}"${hiK ? ` stroke="${C.hi}" stroke-width="1.6"` : ''}`);
+    if (k === 'big' || k === 'hbig') {
+      const dw = Math.min((w - 16) / 4.6, h * .55), gx = x + (w - dw * 4.6) / 2, dh = dw * 1.5, dy = y + (h - dh) / 2, col = k === 'hbig' ? C.hi : C.dig;
+      for (let i = 0; i < 4; i++) o += r(gx + i * dw + (i > 1 ? dw * .6 : 0), dy, dw * .8, dh, `rx="1.5" fill="${col}"`);
+      o += `<circle cx="${(gx + 2.2 * dw).toFixed(1)}" cy="${(dy + dh / 3).toFixed(1)}" r="1.4" fill="${col}"/><circle cx="${(gx + 2.2 * dw).toFixed(1)}" cy="${(dy + dh * 2 / 3).toFixed(1)}" r="1.4" fill="${col}"/>`;
+    }
+    if (k === 'h') o += r(x + 6, y + h * .25, w * .4, Math.max(3, h * .14), `rx="1.5" fill="${C.hi}"`) + r(x + 6, y + h * .55, w * .7, Math.max(4, h * .22), `rx="1.5" fill="${C.hi}" opacity=".55"`);
+    if (k === 'l') {
+      const rh = (h - 10) / 6;
+      for (let i = 0; i < 6; i++) { const ry = y + 5 + i * rh, nx = i === 3;
+        o += r(x + 4, ry + 1, w - 8, rh - 3, `rx="2" fill="${nx ? C.hiBox : C.row}"${nx ? ` stroke="${C.hi}"` : ''}`)
+          + r(x + 8, ry + rh * .35, w * .28, Math.max(2, rh * .3), `rx="1" fill="${nx ? C.hi : C.fg}"`) + r(x + w * .62, ry + rh * .35, w * .26, Math.max(2, rh * .3), `rx="1" fill="${nx ? C.hi : C.fg}"`); }
+    }
+    if (k === 'r') { const cw = (w - 8) / 6; for (let i = 0; i < 6; i++) o += r(x + 5.5 + i * cw, y + 3, cw - 3, h - 6, `rx="2.5" fill="${i === 3 ? C.hiBox : C.row}"${i === 3 ? ` stroke="${C.hi}" stroke-width="1.2"` : ''}`); }
+  }
+  return o + '</svg>';
+}
+function drawLayoutIcons() {
+  if (!draft) return;
+  const D = draft.display, p = D.mode === 'mosque' && (D.orientation === 'portrait' || (D.orientation === 'auto' && mqPortrait.matches));
+  const sig = `${p}|${D.layout}`; if (dlg.dataset.iconSig === sig) return; dlg.dataset.iconSig = sig;
+  for (const n of $$('[data-icon]', dlg)) n.innerHTML = layoutIconSvg(n.dataset.icon, p && LAYOUTS.includes(n.dataset.icon));
+  $('#layoutTiles').classList.toggle('portrait', p);
+  $('#nightIcon').innerHTML = layoutIconSvg(D.layout, p, true);
+}
+
+/* ---- Focus / Night preview: 30 seconds, nothing saved; the dialog is hidden, not closed, so unsaved changes stay ---- */
+const VIEW_PREVIEW_MS = 30000;
+let viewPreview = null;                    // { kind: 'focus' | 'night', until }
+/** The view being previewed at `nowMs`, or null. Pure — used by tick() and the tests. */
+const viewPreviewAt = (nowMs, p = viewPreview) => (p && nowMs < p.until ? p.kind : null);
+function startViewPreview(kind) {
+  viewPreview = { kind, until: Date.now() + VIEW_PREVIEW_MS };
+  dlg.classList.add('view-preview'); $('#vpStop').focus({ preventScroll: true }); tick();
+}
+function endViewPreview() {
+  if (!viewPreview) return;
+  viewPreview = null; dlg.classList.remove('view-preview'); tick();
+}
 let lastTab = 'location';
 function buildSettingsUI() {
   const ms = $('#fMethod'); ms.textContent = '';
@@ -2304,6 +2405,7 @@ function updateDependent() {
   setText($('#oVol'), draft.alerts.volume + '%'); setText($('#oDim'), draft.display.dim + '%');
   setText($('#oOpacity'), draft.display.panelOpacity + '%'); setText($('#oScale'), draft.display.textScale + '%');
   setText($('#notifStatus'), notifStatusText());
+  drawLayoutIcons();
   for (const b of $$('[data-bg]', dlg)) b.setAttribute('aria-pressed', String(b.dataset.bg === draft.display.background));
   const c = Object.keys(cache.months || {}).sort();
   const si = sourceInfo();
@@ -2367,7 +2469,7 @@ function selectTab(name) {
 }
 function openSettings(tab) {
   if (dlg.open) { selectTab(tab || lastTab); return; }
-  draft = clone(settings); V = draft;
+  draft = clone(settings); V = draft; delete dlg.dataset.iconSig;
   renderSoundList(); renderBgGrid(); fillForm(); selectTab(tab || lastTab);
   $('#locError').hidden = true; setText($('#geoStatus'), '');
   dlg.showModal(); updateUnlockBar(); R.classList.remove('idle');
@@ -2405,6 +2507,7 @@ function afterSettingsChange(locChanged) {
   tick();
 }
 dlg.addEventListener('close', () => {
+  if (viewPreview) { viewPreview = null; dlg.classList.remove('view-preview'); }
   if (previewing) stopSound();
   clearNewBadges();
   if (draft) { draft = null; V = settings; version++; rowsSig = ''; applyVisual(settings); tick(); } // cancelled → revert preview
@@ -2493,7 +2596,11 @@ function wire() {
   const discrete = t => t.type === 'radio' || t.type === 'checkbox' || t.tagName === 'SELECT';
   dlg.addEventListener('input', e => { if (!discrete(e.target)) onFormInput(e); });
   dlg.addEventListener('change', e => { if (discrete(e.target)) onFormInput(e); });
+  dlg.addEventListener('cancel', e => { if (viewPreview) { e.preventDefault(); endViewPreview(); } });   // Esc ends a preview without discarding changes
+  document.addEventListener('keydown', e => { if (viewPreview && e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); endViewPreview(); } }, true);
   dlg.addEventListener('click', e => {
+    const vp = e.target.closest('[data-viewprev]'); if (vp) return startViewPreview(vp.dataset.viewprev);
+    if (e.target.closest('#vpStop')) return endViewPreview();
     const pv = e.target.closest('[data-preview]'); if (pv) return preview(pv.dataset.preview, pv.dataset.preview);
     const bg = e.target.closest('[data-bg]'); if (bg) { draft.display.background = bg.dataset.bg; updateDependent(); applyVisual(draft); return; }
     const pr = e.target.closest('[data-preset]');

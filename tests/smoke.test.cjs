@@ -22,7 +22,7 @@ const ctx={console:{log(){},info(){},warn(){},error:(...a)=>errors.push(a.join('
 ctx.window=ctx; vm.createContext(ctx);
 process.on('unhandledRejection',e=>errors.push('UNHANDLED '+(e&&e.stack||e)));
 mem['pr.settings.v2']=JSON.stringify({configured:true,location:{mode:'city',city:'London',country:'United Kingdom'},display:{mode:'home'}});
-try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,hideOverlay,schedule,wallNow,currentTz,prayerState,makruhAt,focusAt,nightAt,sunGeom,hijriOf,checkAlerts,installState,diagnostics,logError,flushOutbox,postFeedback,get firedKeys(){return fired.keys},resetFired(){fired={day:'',keys:[]}},get settings(){return settings},applyVisual,onAdhan,onIqama,onReminder,refreshManifest,compareWithAladhan,sourceInfo};`,ctx);}catch(e){errors.push('SYNC '+e.stack)}
+try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,hideOverlay,schedule,wallNow,currentTz,prayerState,makruhAt,focusAt,nightAt,sunGeom,layoutIconSvg,viewPreviewAt,hijriOf,checkAlerts,installState,diagnostics,logError,flushOutbox,postFeedback,get firedKeys(){return fired.keys},resetFired(){fired={day:'',keys:[]}},get settings(){return settings},applyVisual,onAdhan,onIqama,onReminder,refreshManifest,compareWithAladhan,sourceInfo};`,ctx);}catch(e){errors.push('SYNC '+e.stack)}
 (async()=>{
  for(let i=0;i<5;i++) await new Promise(r=>setImmediate(r));
  const T=ctx.__T; let ok=0,bad=0; const eq=(a,b,m)=>{const p=JSON.stringify(a)===JSON.stringify(b);p?ok++:bad++;console.log((p?'PASS ':'FAIL ')+m+(p?'':`  got ${JSON.stringify(a)} exp ${JSON.stringify(b)}`))};
@@ -95,6 +95,10 @@ try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,
    eq([G.mk.length,T.sunGeom(d,nz).mk.length,T.sunGeom(d,nm2).mk.length],[3,2,0],'Sun path: three Makruh windows (two without Zawal, none when Makruh is off)'); }
  try{ T.settings.display.layout='sunpath'; T.applyVisual(T.settings); T.tick(); eq(true,true,'Sun path layout builds'); }catch(e){ eq(e.message,null,'Sun path layout builds'); } finally{ T.settings.display.layout='classic'; T.applyVisual(T.settings); T.tick(); }
 
+ // Layout picker icons and the 30-second Focus / Night preview
+ eq(['classic','board','split','sunpath','a','b','c'].map(k=>/^<svg viewBox="0 0 160 90"/.test(T.layoutIconSvg(k))),[true,true,true,true,true,true,true],'Layout picker: an icon for every layout and Focus A/B/C');
+ eq([/viewBox="0 0 90 160"/.test(T.layoutIconSvg('board',true)), /#07080c/.test(T.layoutIconSvg('split',false,true)), T.layoutIconSvg('nope')],[true,true,''],'Layout picker: portrait and Night versions; unknown layout draws nothing');
+ { const p={kind:'night',until:1e6}; eq([T.viewPreviewAt(1e6-1,p),T.viewPreviewAt(1e6,p),T.viewPreviewAt(5,null)],['night',null,null],'Preview: on for its 30 seconds, then off by itself'); }
  // feedback
  T.logError('audio','NotAllowedError: play() failed'); T.logError('audio','NotAllowedError: play() failed');
  const dg=T.diagnostics(); eq(/App 2\.5\.0/.test(dg) && /London/.test(dg) && /\[audio\].*\(x2\)/.test(dg) && !/51\.5074/.test(dg),true,'diagnostics: version, city, de-duplicated errors, no exact GPS');
