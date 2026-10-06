@@ -3,7 +3,7 @@
 > **For a new Claude session / new developer:** read this file first, then `README.md`.
 > Repository: **`nadeemcoorg/Prayer`** on GitHub (default branch `main`, deployed by Netlify).
 > It records what the app is, how it is built, every revision so far, the decisions the owner made (and why), and what is still open.
-> Last updated: **2026-10-05** · Current version: **2.4.0** · Owner: Nadeem Ahmad (GitHub: `nadeemcoorg`)
+> Last updated: **2026-10-06** · Current version: **2.5.0** · Owner: Nadeem Ahmad (GitHub: `nadeemcoorg`)
 
 ---
 
@@ -177,21 +177,29 @@ A single `Index.html` with major bugs found in the first review:
 - README and HANDOVER brought up to date: resizing, the repository instead of a local folder, the Moonsighting Committee offline limit.
 - `CLAUDE.md` added: what "deploy" means (merge → pull → check and fix → push).
 
-### v2.4.0: Zawal Makruh window (current)
+### v2.4.0: Zawal Makruh window
 - Third Makruh window at **Zawal**, Hanafi by default (on, 10 min, Fridays included). Based on Sahih Muslim 831 (the three forbidden times).
 - `dayEvents()` now returns `zawal` (true solar noon: the day's Dhuhr before user offsets and Jumu'ah, minus the method's own Dhuhr minutes); `makruhAt()` checks `zawal − zawalMin → zawal`.
 - New settings `display.zawal`, `display.zawalMin`, `display.zawalSkipFriday`. Existing screens get the Hanafi default on update.
 - Tests: 5 new checks (weekday, edges, Friday, Shafi'i Friday option, off). Verified on screen (1920×1080, Tokyo, before and after noon) and in Settings on a phone.
 
+### v2.5.0: layout themes, Focus and Night (current)
+- Settings → Display → **Layout**: 1 Classic (default), 2 **Mosque board** (timetable with Adhan/Iqama columns and a Jumu'ah row every day), 3 **Split**, 5 **Sun path** (the sun's arc with prayers and the three Makruh windows). Merged from PRs #3–#7, one branch per feature on a shared `layout-base`.
+- **Focus mode** (Mosque only, off by default): A clock + countdown, B clock first, C countdown only; on from the adhan until the Iqama, after the adhan screen closes.
+- **Night view** (layout 6): after Isha's Iqama until the Fajr adhan; default Automatic = Mosque screens only, or On / Off. Near-black with dim amber text, slight drift against burn-in.
+- `focusAt()`, `nightAt()` and `sunGeom()` are pure and tested. Size +24 KB, no new downloads. Preview harness: optional display-settings argument and a `tv_portrait` scenario.
+- The owner previewed the layouts on the Netlify deploy previews; Focus and Night could not be checked live because they depend on the time of day (see section 8).
+
 ---
 
 ## 6. Testing
 
-- **Automated:** `node tests/smoke.test.cjs`. Expected: **31 passed, 0 failed, errors: none**. It covers:
+- **Automated:** `node tests/smoke.test.cjs`. Expected: **42 passed, 0 failed, errors: none**. It covers:
   - location lookup and on-device times; Fajr/Ishraq/Dhuhr/Isha "now/next" rules; Makruh windows, including Zawal;
   - Islamic midnight; Hijri date; iPhone install state; the adhan fires once;
-  - diagnostics content; offline feedback outbox; Netlify form encoding.
-- **Visual:** `python tests/preview_harness.py <phone|tv|phone_times|laptop> [fake ISO time]` → open `tests/preview_harness.html`.
+  - diagnostics content; offline feedback outbox; Netlify form encoding;
+  - layouts build (board, split, sun path); Focus and Night on/off windows; sun-path geometry.
+- **Visual:** `python tests/preview_harness.py <phone|tv|tv_portrait|phone_times|laptop> [fake ISO time] ['{"layout":"board"}']` → open `tests/preview_harness.html`. The fake time is how Focus and Night were checked.
 - **Verified on screen** (by screenshot): 1920×1080 TV (24 h and 12 h), 1024×768, 1080×1920 portrait, laptop, tablet, phone, first-run banner.
 - **Not yet verified on screen:** Settings dialog after the tab fix (the owner did confirm the fix by screenshot), adhan/Iqama overlays, Makruh visuals, install banner, Feedback tab. The owner said "Looks good" after v2.2.0.
 
@@ -216,10 +224,10 @@ A single `Index.html` with major bugs found in the first review:
    - the Netlify build shows `✓ dist/ ready` (the build runs cleanly locally);
    - Netlify → Forms → *Enable form detection*, then *Submission notifications → Email* for the `feedback` form;
    - after the first image upload, check the repository's **Actions** tab shows *Resize new images* succeeding (needs Settings → Actions → General → *Workflow permissions: Read and write* if the push step is refused).
-2. **Layouts: decided, being built** (see the decisions table). One branch per feature, all started from `claude/layout-base`:
-   - `claude/layout-board` (2), `claude/layout-split` (3), `claude/layout-sunpath` (5), `claude/focus-mode` (4A/B/C + automation), `claude/night-mode` (6 + automation).
-   - Build order 2 → 4 → 6 → 3 → 5. `layout-base` is merged together with the first feature; bump the version only when deploying.
-   - Hooks in `index.html`: `LAYOUTS`, the `lay-*` class on `<html>`, `focusAt()` / `nightAt()` (pure, tested) and `applyAuto()` in `tick()`, plus one marked block per feature in the CSS and in Settings → Display → Layout.
+2. ~~**Layouts**~~: done in v2.5.0. Hooks in `index.html`: `LAYOUTS`, the `lay-*` class on `<html>`, `focusAt()` / `nightAt()` and `applyAuto()` in `tick()`, one marked block per feature in the CSS, in Settings → Display → Layout and in the smoke test. Follow-ups:
+   - a way for the owner to **preview Focus and Night** without waiting for the right time (for example a "Preview for 30 seconds" button in Settings);
+   - Mockup page: https://claude.ai/artifact/Umajse7HnkW9ePa86atVH6
+6. **Small bug (from before v2.5.0):** in 12-hour mode the Ishraq line on the Sunrise card reads "5:59 الشروقAM" (the AM lands in the wrong place inside the Arabic text).
 3. **Photo validation** (block people, animals, cartoons, hearts, emoji and so on in user uploads). Options discussed:
    - (A) on-device object/face detection, ~5–8 MB, catches people and animals;
    - (B) on-device zero-shot model (CLIP), ~90–150 MB, catches everything but is slow;

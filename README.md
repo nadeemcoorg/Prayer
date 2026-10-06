@@ -96,6 +96,18 @@ Files uploaded *inside Settings* stay on that device only. **Export** includes t
 
 The device clock must be correct: without internet, Windows can't correct its time.
 
+## Layouts
+
+Settings → Display → **Layout** works in both Home and Mosque mode:
+- **Classic**: clock, next prayer and a row of prayer cards (the default).
+- **Mosque board**: a timetable with Adhan and Iqama columns, readable from the back, with a Jumu'ah row every day.
+- **Split**: clock on one half, the prayer list on the other (stacked on vertical screens).
+- **Sun path**: the sun's arc across the day with today's prayers and the Makruh times marked in red.
+
+Two views switch on by themselves:
+- **Focus mode** (Mosque screens, off until turned on): from the adhan until the Iqama the screen shows a large, simple view (A clock and countdown side by side, B large clock, C countdown only), starting once the adhan screen closes.
+- **Night view**: after Isha's Iqama until the Fajr adhan the screen turns near-black with dim amber text. Automatic (Mosque screens only) by default; can be set On or Off per screen.
+
 ## Home vs Mosque mode
 
 | | Home | Mosque / TV |
