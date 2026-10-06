@@ -32,6 +32,9 @@ No user accounts, no backend server. Everything runs in the browser; settings ar
 | "Now" rules | Fajr is "now" until sunrise. **Sunrise → Dhuhr: nothing is "now"**. Isha is "now" until **Islamic midnight** (half-way sunset → sunrise) |
 | Makruh (spelling: *Makruh*, مكروه) | Red, blinking card plus red strip: **Tulu' → Ishraq** and **Maghrib − 20 min → Maghrib**. Text: "Ruku and Sujood are not allowed". The pre-Maghrib warning is on the **Asr** card (the current period); the owner was told and didn't object |
 | Zawal (زوال) | **Hanafi by default**: a third Makruh window, **10 min before true solar noon → noon**, every day **including Friday**, on the **Dhuhr / Jumu'ah card**. Settings → Prayer & Iqama: on/off (Maliki users turn it off), minutes (3–30), and "No Zawal warning on Fridays" (Shafi'i, off by default). The window ends at solar noon, not at the shown Dhuhr time, for methods that add minutes to Dhuhr (Türkiye, Dubai, Morocco, Lisbon) |
+| Layouts | **Layout themes for all modes** (Settings → Display → Layout): 1 Classic (default), 2 Mosque board, 3 Split, 5 Sun path. Mockups: https://claude.ai/artifact/Umajse7HnkW9ePa86atVH6 |
+| Focus view | **Mosque only**, Focus mode on/off (off by default) with a choice of **4A** clock + countdown side by side, **4B** clock first, **4C** countdown only. Automatic: on from the **adhan until the Iqama**, starting **once the adhan screen closes**; off after the Iqama |
+| Night view | Layout 6 for every screen. Automatic: on **after Isha's Iqama**, off at the **Fajr adhan**. Default **on for Mosque, off for Home** (setting: auto / on / off). Ticker stays visible; Fajr adhan and sound unaffected |
 | Minutes | 20 by default (Settings → Prayer & Iqama → "Minutes"), used for both Ishraq and pre-Maghrib Makruh |
 | Feedback | Netlify Forms with an email notification (address configured in Netlify, never in code) |
 | Images | No uploads to all users yet. Per-device uploads only (one custom background and one adhan per device) |
@@ -82,17 +85,18 @@ Sections in order, each marked by a `/* ---- name ---- */` banner:
 6. **AlAdhan backup**: `fetchMonth()` (monthly calendar), `neededMonths()` (current + 2 months), `sourceInfo()` (decides local / api / stale), `ensureData()`, `getDay()`.
 7. **schedule**: `dayEvents()` applies offsets, Iqama rules and Jumu'ah; `schedule()` is memoised and includes yesterday, today and tomorrow.
 8. **rendering**: `applyVisual()` (mode, colours, layout classes `fill` / `portrait` / `list-mode`), `buildRows()`, `renderHijri()`, `setStatus()`.
-9. **main loop**:
+9. **automatic views**: `focusAt()` and `nightAt()` are pure; `applyAuto()` sets `auto-focus`, `focus-a|b|c` and `night` on `<html>`. Focus is held back while the adhan overlay is open.
+10. **main loop**:
    - `makruhAt()` and `prayerState()` are **pure functions**, tested directly.
    - `tick()` runs every second, aligned to the second.
-10. **alerts**: `checkAlerts()` fires each alert **once** within a 2-minute window, with de-duplication in `pr.fired`. It never re-fires (this fixed the v1 bug that repeated the adhan every second).
-11. **audio**: a single `Audio` element, the `unlockAudio()` first-tap unlock, `chime()` (WebAudio, no file).
-12. notifications, wake lock, idle/full screen, toasts, custom files.
-13. **settings dialog**: `<dialog>` with a *draft* copy. Changes preview live (`V = draft`); Cancel reverts; Save commits.
-14. geolocation, import/export (the export includes uploaded files as data URLs).
-15. **new content & offline**: `refreshManifest()` every 3 h, "New" badges, auto-switch option, `registerSW()`.
-16. **install (PWA)**: `beforeinstallprompt` handling, iOS "Share → Add to Home Screen" tip.
-17. **error log & feedback**: `logError()` keeps the last 30 errors on the device; `diagnostics()`; `sendFeedback()` posts to Netlify Forms; `flushOutbox()` sends messages saved while offline.
+11. **alerts**: `checkAlerts()` fires each alert **once** within a 2-minute window, with de-duplication in `pr.fired`. It never re-fires (this fixed the v1 bug that repeated the adhan every second).
+12. **audio**: a single `Audio` element, the `unlockAudio()` first-tap unlock, `chime()` (WebAudio, no file).
+13. notifications, wake lock, idle/full screen, toasts, custom files.
+14. **settings dialog**: `<dialog>` with a *draft* copy. Changes preview live (`V = draft`); Cancel reverts; Save commits.
+15. geolocation, import/export (the export includes uploaded files as data URLs).
+16. **new content & offline**: `refreshManifest()` every 3 h, "New" badges, auto-switch option, `registerSW()`.
+17. **install (PWA)**: `beforeinstallprompt` handling, iOS "Share → Add to Home Screen" tip.
+18. **error log & feedback**: `logError()` keeps the last 30 errors on the device; `diagnostics()`; `sendFeedback()` posts to Netlify Forms; `flushOutbox()` sends messages saved while offline.
 
 ### Storage keys (localStorage unless noted)
 - `pr.settings.v2` settings · `pr.cache.v3` AlAdhan monthly backup · `pr.calib` calibration · `pr.fired` alerts already fired today
@@ -212,9 +216,10 @@ A single `Index.html` with major bugs found in the first review:
    - the Netlify build shows `✓ dist/ ready` (the build runs cleanly locally);
    - Netlify → Forms → *Enable form detection*, then *Submission notifications → Email* for the `feedback` form;
    - after the first image upload, check the repository's **Actions** tab shows *Resize new images* succeeding (needs Settings → Actions → General → *Workflow permissions: Read and write* if the push step is refused).
-2. **Layouts:** six sketches were shown (1 Classic, 2 Mosque board, 3 Split, 4 Focus, 5 Sun path, 6 Night). **Waiting for the owner's go signal and choice.**
-   - Plan: CSS-only layout themes on the same page (~2–5 KB each, no performance cost), a picker with previews, separate defaults for Home and Mosque.
-   - Suggested first: Mosque board and Focus.
+2. **Layouts: decided, being built** (see the decisions table). One branch per feature, all started from `claude/layout-base`:
+   - `claude/layout-board` (2), `claude/layout-split` (3), `claude/layout-sunpath` (5), `claude/focus-mode` (4A/B/C + automation), `claude/night-mode` (6 + automation).
+   - Build order 2 → 4 → 6 → 3 → 5. `layout-base` is merged together with the first feature; bump the version only when deploying.
+   - Hooks in `index.html`: `LAYOUTS`, the `lay-*` class on `<html>`, `focusAt()` / `nightAt()` (pure, tested) and `applyAuto()` in `tick()`, plus one marked block per feature in the CSS and in Settings → Display → Layout.
 3. **Photo validation** (block people, animals, cartoons, hearts, emoji and so on in user uploads). Options discussed:
    - (A) on-device object/face detection, ~5–8 MB, catches people and animals;
    - (B) on-device zero-shot model (CLIP), ~90–150 MB, catches everything but is slow;
