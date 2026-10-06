@@ -334,6 +334,22 @@ html.fill.portrait.auto-focus.focus-c .np-count{font-size:10rem}
 
 
 /* ---- night mode ---- */
+/* After Isha's Iqama until the Fajr adhan: near-black, dim amber text, so the screen lights the room as little as possible.
+   !important beats the colours applyVisual() sets inline. The page drifts a few pixels every few minutes to avoid burn-in. */
+html.night{--text:#d8b48c !important; --muted:#8a7058 !important; --faint:#6d5845 !important; --accent:#c9a27a !important; --accent-soft:rgba(201,162,122,.1) !important;
+  --accent-ink:#1a120a !important; --warn:#c9a27a !important; --panel:rgba(0,0,0,0) !important; --panel-border:#1d1a17 !important; --row:rgba(255,255,255,.02) !important; --row-strong:rgba(255,255,255,.04) !important}
+html.night body, html.night #bg{background:#05060a !important; background-image:none !important}
+html.night #bg::after{display:none}
+html.night .panel, html.night .icon-btn{box-shadow:none}
+html.night .clock{font-weight:300; text-shadow:none}
+html.night .brand h1, html.night .brand .loc{text-shadow:none}
+html.night .p-row.next{box-shadow:0 0 0 1px var(--accent)}
+html.night .p-badge{background:var(--accent); color:var(--accent-ink)}
+html.night .next-panel.iqama-phase .eyebrow{color:var(--accent)}
+html.night .ticker{color:var(--muted)}
+html.night .app{animation:nightDrift 1200s steps(6, end) infinite}
+@keyframes nightDrift{0%{transform:translate(0,0)}17%{transform:translate(3px,-2px)}33%{transform:translate(-2px,3px)}50%{transform:translate(2px,2px)}67%{transform:translate(-3px,-1px)}83%{transform:translate(1px,-3px)}100%{transform:translate(0,0)}}
+
 
 /* ---------- Floating UI ---------- */
 .toasts{position:fixed; top:max(12px, env(safe-area-inset-top)); left:50%; transform:translateX(-50%); z-index:60; display:flex; flex-direction:column; gap:8px;
@@ -795,6 +811,13 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
             </select></div>
         </div>
         <!-- night settings -->
+        <div class="field"><label for="fNight">Night view after Isha</label>
+          <select class="sel" id="fNight" data-k="display.night">
+            <option value="auto">Automatic: on for Mosque screens only</option>
+            <option value="on">On for this screen</option>
+            <option value="off">Off</option>
+          </select>
+          <p class="hint">From Isha's Iqama until the Fajr adhan the screen turns near-black with dim amber text. Alerts, the Fajr adhan and announcements work as usual.</p></div>
       </section>
       <section class="card">
         <h3>Mode</h3>
@@ -1743,7 +1766,12 @@ function focusAt(nowMs, sc, s = V) {
 }
 /** Whether the Night view is on at `nowMs`; see the night-mode branch. */
 function nightAt(nowMs, sc, s = V) {
-  return false;
+  const n = s.display.night;
+  if (!sc.today || !(n === 'on' || (n === 'auto' && s.display.mode === 'mosque'))) return false;
+  const ev = k => sc.today.events.find(e => e.key === k);
+  const isha = ev('Isha'), fajr = ev('Fajr'); if (!isha || !fajr) return false;
+  const start = isha.iqama != null ? isha.iqama : isha.adhan;   // after Isha's Iqama …
+  return nowMs >= start || nowMs < fajr.adhan;                    // … until the Fajr adhan
 }
 let autoSig = '';
 function applyAuto(focus, night) {

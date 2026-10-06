@@ -74,6 +74,14 @@ try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,
  eq([fms(asrE.adhan+60000,fh),fms(asrE.adhan+60000,fo)],[null,null],'Focus: Mosque mode only, and only when turned on');
 
  // ---- tests: night ----
+ // Night view (after Isha's Iqama until the Fajr adhan). Default 'auto' = Mosque screens only
+ const nm=JSON.parse(JSON.stringify(T.settings)); nm.display.mode='mosque';
+ const ishaE=sc('2026-10-02').today.events.find(e=>e.key==='Isha'), fajrE=sc('2026-10-03').today.events.find(e=>e.key==='Fajr');
+ const na=(ms,k,s=nm)=>T.nightAt(ms,sc(k),s);
+ eq([na(ishaE.iqama-1000,'2026-10-02'),na(ishaE.iqama,'2026-10-02'),na(at('2026-10-03','01:00'),'2026-10-03'),na(fajrE.adhan-1000,'2026-10-03'),na(fajrE.adhan,'2026-10-03')],
+   [false,true,true,true,false],'Night: on from Isha Iqama, through midnight, off at Fajr adhan');
+ const nh=JSON.parse(JSON.stringify(nm)); nh.display.mode='home'; const nho=JSON.parse(JSON.stringify(nh)); nho.display.night='on'; const nmo=JSON.parse(JSON.stringify(nm)); nmo.display.night='off';
+ eq([na(at('2026-10-03','01:00'),'2026-10-03',nh),na(at('2026-10-03','01:00'),'2026-10-03',nho),na(at('2026-10-03','01:00'),'2026-10-03',nmo)],[false,true,false],"Night: 'auto' is Mosque only; 'on' works at Home; 'off' turns it off");
 
  // ---- tests: split ----
 
