@@ -84,6 +84,7 @@ try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,
  eq([na(at('2026-10-03','01:00'),'2026-10-03',nh),na(at('2026-10-03','01:00'),'2026-10-03',nho),na(at('2026-10-03','01:00'),'2026-10-03',nmo)],[false,true,false],"Night: 'auto' is Mosque only; 'on' works at Home; 'off' turns it off");
 
  // ---- tests: split ----
+ try{ T.settings.display.layout='split'; T.applyVisual(T.settings); T.tick(); eq(true,true,'Split layout builds'); }catch(e){ eq(e.message,null,'Split layout builds'); } finally{ T.settings.display.layout='classic'; T.applyVisual(T.settings); T.tick(); }
 
  // ---- tests: sunpath ----
 

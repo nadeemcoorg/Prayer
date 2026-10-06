@@ -286,6 +286,36 @@ html.fill.lay-board.portrait .clock{font-size:5rem}
 
 
 /* ---- layout: split ---- */
+/* Split: clock and next prayer on one half, the prayer list on the other (side by side on wide screens, stacked on portrait). */
+@media (min-width:860px){ html:not(.fill).lay-split .main{grid-template-columns:1fr 1fr; grid-template-rows:auto 1fr; grid-template-areas:"hero prayers" "next prayers"} }
+html.fill.lay-split .main{grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-rows:1fr auto; grid-template-areas:"hero prayers" "next prayers"}
+html.fill.lay-split .clock{font-size:7.5rem}
+html.fill.lay-split .prayers{grid-template-rows:auto; grid-auto-rows:1fr; align-content:stretch; padding:.6rem .9rem}
+html.fill.lay-split .p-head{grid-template-columns:1fr 6.5rem 6.5rem; font-size:.75rem; align-self:end}
+html.fill.lay-split:not(.show-iqama) .p-head{grid-template-columns:1fr 6.5rem}
+html.fill.lay-split .p-row{grid-template-columns:1fr 6.5rem 6.5rem; padding:.2rem 1rem}
+html.fill.lay-split:not(.show-iqama) .p-row{grid-template-columns:1fr 6.5rem}
+html.fill.lay-split .p-label{flex-wrap:nowrap; min-width:0; overflow:hidden}
+html.fill.lay-split .p-row.sunrise .p-label{flex-wrap:wrap; row-gap:0}
+html.fill.lay-split .p-row.sunrise .p-sub{flex-basis:100%; margin:0}
+html.fill.lay-split .p-name{font-size:1.5rem}
+html.fill.lay-split .p-ar{font-size:1.25rem}
+html.fill.lay-split .p-adhan{font-size:1.9rem}
+html.fill.lay-split .p-iqama{font-size:1.6rem}
+html.fill.lay-split.h12 .p-adhan{font-size:1.55rem} html.fill.lay-split.h12 .p-iqama{font-size:1.35rem}
+html.fill.lay-split .p-row.next{box-shadow:inset .3rem 0 0 var(--accent)}
+html.fill.lay-split .next-panel{flex-direction:row; flex-wrap:wrap; align-items:baseline; justify-content:center; gap:.2rem 1.4rem; text-align:center}
+html.fill.lay-split .next-panel .progress{flex-basis:100%}
+html.fill.lay-split .np-count{margin:0}
+html.fill.portrait.lay-split .main{grid-template-columns:minmax(0,1fr); grid-template-rows:auto auto 1fr; grid-template-areas:"hero" "next" "prayers"}
+html.fill.portrait.lay-split .clock{font-size:8.5rem}
+html.fill.portrait.lay-split .p-head, html.fill.portrait.lay-split .p-row{grid-template-columns:1fr 8.5rem 8.5rem}
+html.fill.portrait.lay-split:not(.show-iqama) .p-head, html.fill.portrait.lay-split:not(.show-iqama) .p-row{grid-template-columns:1fr 8.5rem}
+html.fill.portrait.lay-split .p-name{font-size:2rem}
+html.fill.portrait.lay-split .p-ar{font-size:1.7rem}
+html.fill.portrait.lay-split .p-adhan{font-size:2.6rem}
+html.fill.portrait.lay-split .p-iqama{font-size:2.1rem}
+
 
 /* ---- layout: sunpath ---- */
 
@@ -797,6 +827,7 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
             <!-- layout option: board -->
             <option value="board">Mosque board: timetable with Adhan and Iqama columns</option>
             <!-- layout option: split -->
+            <option value="split">Split: clock on one half, the prayer list on the other</option>
             <!-- layout option: sunpath -->
           </select>
           <p class="hint">Used in both Home and Mosque mode.</p></div>
