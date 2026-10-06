@@ -98,7 +98,7 @@ The device clock must be correct: without internet, Windows can't correct its ti
 
 ## Layouts
 
-Settings → Display → **Layout** works in both Home and Mosque mode:
+Settings → Display → **Layout** works in both Home and Mosque mode. Each layout is shown as a small picture; tap one and the screen behind Settings changes straight away (nothing is kept until you press Save):
 - **Classic**: clock, next prayer and a row of prayer cards (the default).
 - **Mosque board**: a timetable with Adhan and Iqama columns, readable from the back, with a Jumu'ah row every day.
 - **Split**: clock on one half, the prayer list on the other (stacked on vertical screens).
@@ -107,6 +107,8 @@ Settings → Display → **Layout** works in both Home and Mosque mode:
 Two views switch on by themselves:
 - **Focus mode** (Mosque screens, off until turned on): from the adhan until the Iqama the screen shows a large, simple view (A clock and countdown side by side, B large clock, C countdown only), starting once the adhan screen closes.
 - **Night view**: after Isha's Iqama until the Fajr adhan the screen turns near-black with dim amber text. Automatic (Mosque screens only) by default; can be set On or Off per screen.
+
+To see Focus or Night at any time of day, use **Preview Focus / Preview Night for 30 seconds** in the same card. Settings hides while the preview runs and comes back afterwards with your changes still there; press **Stop preview** or Esc to end it early.
 
 ## Home vs Mosque mode
 

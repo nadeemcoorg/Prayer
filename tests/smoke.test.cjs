@@ -101,7 +101,7 @@ try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,
  { const p={kind:'night',until:1e6}; eq([T.viewPreviewAt(1e6-1,p),T.viewPreviewAt(1e6,p),T.viewPreviewAt(5,null)],['night',null,null],'Preview: on for its 30 seconds, then off by itself'); }
  // feedback
  T.logError('audio','NotAllowedError: play() failed'); T.logError('audio','NotAllowedError: play() failed');
- const dg=T.diagnostics(); eq(/App 2\.5\.0/.test(dg) && /London/.test(dg) && /\[audio\].*\(x2\)/.test(dg) && !/51\.5074/.test(dg),true,'diagnostics: version, city, de-duplicated errors, no exact GPS');
+ const dg=T.diagnostics(); eq(/App 2\.6\.0/.test(dg) && /London/.test(dg) && /\[audio\].*\(x2\)/.test(dg) && !/51\.5074/.test(dg),true,'diagnostics: version, city, de-duplicated errors, no exact GPS');
  mem['pr.outbox']=JSON.stringify([{type:'Problem',message:'Adhan did not play',email:''}]);
  await T.flushOutbox(); eq(posts.length,1,'saved (offline) feedback is sent when online');
  const b=new URLSearchParams(posts[0].body); eq([b.get('form-name'),b.get('type'),posts[0].headers['Content-Type']],['feedback','Problem','application/x-www-form-urlencoded'],'posted as Netlify form "feedback" (url-encoded)');
