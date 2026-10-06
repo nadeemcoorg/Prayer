@@ -5,7 +5,7 @@
      version; when offline the saved copy is used.
    • Images and sounds are "cache first" (file names don't change).
    • Calls to AlAdhan / Open-Meteo are not touched — the app keeps its own saved data. */
-const VERSION = '2.4.0';
+const VERSION = '2.5.0';
 const SHELL = 'pt-shell-' + VERSION;
 const MEDIA = 'pt-media-v1';
 const SHELL_FILES = ['./', 'index.html', 'manifest.js', 'manifest.json', 'app.webmanifest',
