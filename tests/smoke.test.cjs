@@ -64,6 +64,14 @@ try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,
  try{ T.settings.display.layout='board'; T.applyVisual(T.settings); T.tick(); eq(true,true,'Mosque board layout builds (with Jumu\'ah row)'); }catch(e){ eq(e.message,null,'Mosque board layout builds'); } finally{ T.settings.display.layout='classic'; T.applyVisual(T.settings); T.tick(); }
 
  // ---- tests: focus ----
+ // Focus mode (Mosque only, Adhan → Iqama). London 2026-10-02: Asr adhan 15:56, Iqama +15 min
+ const fm=JSON.parse(JSON.stringify(T.settings)); fm.display.mode='mosque'; fm.display.focus=true; fm.display.focusLayout='b';
+ const fa=(t,s=fm)=>T.focusAt(at('2026-10-02',t),sc('2026-10-02'),s), fms=(ms,s=fm)=>T.focusAt(ms,sc('2026-10-02'),s);
+ const asrE=sc('2026-10-02').today.events.find(e=>e.key==='Asr');
+ eq([fms(asrE.adhan-60000),fms(asrE.adhan+60000),fms(asrE.iqama-1000),fms(asrE.iqama)],[null,'b','b',null],'Focus: off before adhan, on from adhan until Iqama, off at Iqama');
+ eq(fa('07:10'),null,'Focus: never at Sunrise (no Iqama)');
+ const fh=JSON.parse(JSON.stringify(fm)); fh.display.mode='home'; const fo=JSON.parse(JSON.stringify(fm)); fo.display.focus=false;
+ eq([fms(asrE.adhan+60000,fh),fms(asrE.adhan+60000,fo)],[null,null],'Focus: Mosque mode only, and only when turned on');
 
  // ---- tests: night ----
 
