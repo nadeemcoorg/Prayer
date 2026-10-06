@@ -891,16 +891,17 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
         <p class="hint">Used in both Home and Mosque mode. The screen behind Settings shows your choice straight away.</p>
         <div class="lp-sub" data-show="display.mode=mosque">
           <label class="sw"><input type="checkbox" data-k="display.focus"><span class="track"></span><span class="txt">Focus mode from Adhan to Iqama<small>After the adhan screen closes, the screen switches to a large, simple view until the Iqama, then returns to the layout above.</small></span></label>
-          <div data-show="display.focus=true">
+          <div>
             <div class="lp-tiles small" role="radiogroup" aria-label="Focus layout">
             <label class="lp-tile"><input type="radio" name="focusLayout" value="a" data-k="display.focusLayout"><span class="lp-box"><span class="lp-ic" data-icon="a" aria-hidden="true"></span><span class="lp-nm">A</span><span class="lp-ds">Clock and countdown side by side</span></span></label>
             <label class="lp-tile"><input type="radio" name="focusLayout" value="b" data-k="display.focusLayout"><span class="lp-box"><span class="lp-ic" data-icon="b" aria-hidden="true"></span><span class="lp-nm">B</span><span class="lp-ds">Large clock, countdown below</span></span></label>
             <label class="lp-tile"><input type="radio" name="focusLayout" value="c" data-k="display.focusLayout"><span class="lp-box"><span class="lp-ic" data-icon="c" aria-hidden="true"></span><span class="lp-nm">C</span><span class="lp-ds">Countdown only</span></span></label>
             </div>
             <div class="btn-row"><button class="sbtn small" type="button" data-viewprev="focus">▶ Preview Focus for 30 seconds</button></div>
-            <p class="hint">Outside prayer time the preview counts down to the next adhan; the real view counts down to the Iqama.</p>
+            <p class="hint">You can preview Focus before turning it on. Outside prayer time the preview counts down to the next adhan; the real view counts down to the Iqama.</p>
           </div>
         </div>
+        <p class="hint lp-sub" data-show="display.mode=home">Focus mode (a large, simple view from Adhan to Iqama) is for Mosque / TV screens. Choose <b>Mosque / TV display</b> under Mode below to use and preview it.</p>
         <div class="lp-sub">
           <div class="lp-night">
             <div class="field" style="margin-top:0"><label for="fNight">Night view after Isha</label>
