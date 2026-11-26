@@ -29,7 +29,7 @@
   --panel:rgba(11,18,32,.55); --panel-border:rgba(255,255,255,.14);
   --row:rgba(255,255,255,.06); --row-strong:rgba(255,255,255,.12);
   --text:#fff; --muted:rgba(255,255,255,.74); --faint:rgba(255,255,255,.52);
-  --dim:.35; --scale:1; --radius:1rem;
+  --dim:.35; --scale:1; --radius:1rem; --app-h:100vh;   /* --app-h: the real visible height, set by updateLayoutClasses() */
   --font:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
   --font-ar:"Amiri","Scheherazade New","Traditional Arabic","Arabic Typesetting","Geeza Pro","Noto Naskh Arabic",serif;
 }
@@ -38,7 +38,7 @@ html.light-panels{
   --panel-border:rgba(17,24,39,.12); --row:rgba(17,24,39,.05); --row-strong:rgba(17,24,39,.1);
 }
 *,*::before,*::after{box-sizing:border-box}
-html{font-size:calc(clamp(15px, .45vw + 11px, 20px) * var(--scale)); -webkit-text-size-adjust:100%}
+html{font-size:16px; font-size:calc(clamp(15px, .45vw + 11px, 20px) * var(--scale)); -webkit-text-size-adjust:100%}
 html.fill{font-size:calc(min(1vw, 1.8vh) * 1.55 * var(--scale))}
 html.fill.portrait{font-size:calc(min(2.35vw, 1.42vh) * var(--scale))}
 body{margin:0; min-height:100vh; min-height:100dvh; font-family:var(--font); color:var(--text);
@@ -53,16 +53,16 @@ html:not(.show-ar) .ar{display:none}
 :focus-visible{outline:3px solid var(--accent); outline-offset:2px}
 
 /* ---------- Background ---------- */
-#bg{position:fixed; inset:0; z-index:-2; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%) center/cover no-repeat;
+#bg{position:fixed; top:0; right:0; bottom:0; left:0; z-index:-2; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%) center/cover no-repeat;
   transition:background-image .6s ease}
-#bg::after{content:""; position:absolute; inset:0; background:rgba(0,0,0,0); transition:background .3s}
+#bg::after{content:""; position:absolute; top:0; right:0; bottom:0; left:0; background:rgba(0,0,0,0); transition:background .3s}
 html.has-image #bg::after{background:rgba(0,0,0,var(--dim))}
 
 /* ---------- App shell ---------- */
 .app{min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; gap:1rem;
-  width:min(100%, 1280px); margin:0 auto;
-  padding:max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))}
-@media (min-width:700px){ .app{padding:clamp(16px, 2.5vw, 32px)} }
+  width:100%; max-width:1280px; width:min(100%, 1280px); margin:0 auto;
+  padding:16px; padding:max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))}
+@media (min-width:700px){ .app{padding:24px; padding:clamp(16px, 2.5vw, 32px)} }
 
 .panel{background:var(--panel); border:1px solid var(--panel-border); border-radius:var(--radius);
   box-shadow:0 10px 30px -12px rgba(0,0,0,.45); padding:1.25rem 1.5rem}
@@ -107,7 +107,7 @@ button.chip{cursor:pointer}
 @media (min-width:860px){ html:not(.fill) .main{grid-template-columns:1.15fr 1fr; grid-template-areas:"hero next" "prayers prayers"} }
 
 .hero{grid-area:hero; text-align:center; display:flex; flex-direction:column; justify-content:center; align-items:center; padding-block:1.5rem}
-.clock{font-size:clamp(3.2rem, 11vw, 6rem); font-weight:700; line-height:1; letter-spacing:-.02em; text-shadow:0 2px 8px rgba(0,0,0,.25); white-space:nowrap}
+.clock{font-size:5rem; font-size:clamp(3.2rem, 11vw, 6rem); font-weight:700; line-height:1; letter-spacing:-.02em; text-shadow:0 2px 8px rgba(0,0,0,.25); white-space:nowrap}
 .clock .sec{font-size:.42em; font-weight:600; opacity:.7; margin-inline-start:.12em; letter-spacing:0}
 .clock .ap{font-size:.32em; font-weight:600; opacity:.8; margin-inline-start:.25em; letter-spacing:.02em}
 .dates{margin-top:.75rem; display:flex; flex-wrap:wrap; justify-content:center; gap:.2rem 1.25rem; color:var(--muted); font-size:1rem}
@@ -120,7 +120,7 @@ button.chip{cursor:pointer}
 .np-name{font-size:2.1rem; font-weight:700; line-height:1.1}
 .np-ar{font-size:1.6rem; opacity:.85}
 .np-at{color:var(--muted); font-size:1rem}
-.np-count{font-size:clamp(2.4rem, 7vw, 3.2rem); font-weight:700; line-height:1.05; margin-top:.25rem}
+.np-count{font-size:3rem; font-size:clamp(2.4rem, 7vw, 3.2rem); font-weight:700; line-height:1.05; margin-top:.25rem}
 .np-count small{font-size:.4em; font-weight:600; color:var(--muted); margin-inline-start:.4em; letter-spacing:.04em}
 .progress{height:.45rem; margin-top:.6rem; border-radius:999px; background:var(--row-strong); overflow:hidden}
 .progress > i{display:block; height:100%; width:0; background:var(--accent); border-radius:inherit; transition:width 1s linear}
@@ -212,8 +212,8 @@ html.list-mode .p-row.current:not(.makruh) .p-name::after{content:"NOW"; margin-
 /* ---------- Mosque / kiosk mode ---------- */
 html.fill, html.fill body{height:100%; overflow:hidden}
 html.fill:not(.mosque), html.fill:not(.mosque) body{height:auto; overflow-y:auto}
-html.fill:not(.mosque) .app{height:auto; min-height:100vh; min-height:100dvh}
-html.fill .app{width:100%; max-width:none; height:100vh; height:100dvh; min-height:0; padding:2.2vmin 2.6vmin; gap:1.6vmin}
+html.fill:not(.mosque) .app{min-height:0}
+html.fill .app{width:100%; max-width:none; height:100vh; height:100dvh; height:var(--app-h); min-height:0; padding:2.2vmin 2.6vmin; gap:1.6vmin}
 html.fill .main{flex:1; min-height:0; gap:1.6vmin; grid-template-columns:1.2fr 1fr; grid-template-rows:minmax(min-content,1fr) auto; grid-template-areas:"hero next" "prayers prayers"}
 html.fill .panel{padding:1rem 1.4rem;}
 html.fill .brand h1{font-size:1.6rem}
@@ -239,8 +239,11 @@ html.fill.portrait .p-head{grid-template-columns:1fr 9rem 9rem; font-size:.9rem;
 html.fill.portrait:not(.show-iqama) .p-head{grid-template-columns:1fr 9rem}
 html.fill.portrait .p-row{grid-template-columns:1fr 9rem 9rem; padding:.5rem 1.4rem}
 html.fill.portrait:not(.show-iqama) .p-row{grid-template-columns:1fr 9rem}
-html.fill.portrait .p-name{font-size:2rem}
-html.fill.portrait .p-ar{font-size:1.8rem}
+html.fill.portrait .p-label{flex-wrap:nowrap; min-width:0; overflow:hidden; white-space:nowrap}   /* one line per prayer, so a long name (Jumu'ah + badge) can't push the last row off screen */
+html.fill.portrait .p-ar{min-width:0; overflow:hidden; text-overflow:ellipsis}
+html.fill.portrait .p-name{font-size:1.8rem}
+html.fill.portrait .p-ar{font-size:1.55rem}
+html.fill.portrait .p-row.sunrise .p-sub{font-size:.85rem}
 html.fill.portrait .p-adhan{font-size:2.4rem}
 html.fill.portrait .p-iqama{font-size:2.1rem}
 html.fill.h12 .p-adhan, html.fill.portrait.h12 .p-adhan{font-size:2.05rem}
@@ -414,15 +417,35 @@ html.night .app{animation:nightDrift 1200s steps(6, end) infinite}
 @keyframes nightDrift{0%{transform:translate(0,0)}17%{transform:translate(3px,-2px)}33%{transform:translate(-2px,3px)}50%{transform:translate(2px,2px)}67%{transform:translate(-3px,-1px)}83%{transform:translate(1px,-3px)}100%{transform:translate(0,0)}}
 
 
+/* ---------- Older browsers (e.g. Chrome before 2020 on older tablets) ----------
+   html.no-flexgap is set when flexbox "gap" is not supported: the same spacing with margins. */
+html.no-flexgap .app > * + *{margin-top:1rem}
+html.no-flexgap.fill .app > * + *{margin-top:1.6vmin}
+html.no-flexgap .topbar > * + *{margin-left:.75rem}
+html.no-flexgap .tb-actions > * + *{margin-left:.5rem}
+html.no-flexgap .brand .loc > * + *, html.no-flexgap .chip > * + *{margin-left:.35rem}
+html.no-flexgap .dates > * + *{margin-left:1.25rem}
+html.no-flexgap .np-title > * + *{margin-left:.9rem}
+html.no-flexgap .next-panel > * + *{margin-top:.35rem}
+html.no-flexgap .ticker > * + *, html.no-flexgap .unlock > * + *, html.no-flexgap .notice > * + *, html.no-flexgap .install > * + *{margin-left:.75rem}
+html.no-flexgap .makruh-bar > * + *, html.no-flexgap .btn > * + *, html.no-flexgap .sbtn > * + *{margin-left:.5rem}
+html.no-flexgap .floating > * + *, html.no-flexgap .s-head > * + *, html.no-flexgap .sw > * + *, html.no-flexgap .range-row > * + *, html.no-flexgap .lp-night > * + *{margin-left:12px}
+html.no-flexgap .btn-row > * + *, html.no-flexgap .vp-bar > * + *{margin-left:8px}
+html.no-flexgap .ov-card > * + *{margin-top:1.5vmin}
+html.no-flexgap .p-row > * + *{margin-top:.2rem}
+/* No browser focus box after a tap or click; keyboard and TV-remote users (html.kbd) keep the focus ring */
+button, a, label, input, select, [role="button"]{-webkit-tap-highlight-color:transparent}
+html:not(.kbd) :focus{outline:none !important}
+
 /* ---------- Floating UI ---------- */
-.toasts{position:fixed; top:max(12px, env(safe-area-inset-top)); left:50%; transform:translateX(-50%); z-index:60; display:flex; flex-direction:column; gap:8px;
-  width:min(92vw, 420px); pointer-events:none; font-size:15px}
+.toasts{position:fixed; top:12px; top:max(12px, env(safe-area-inset-top)); left:50%; transform:translateX(-50%); z-index:60; display:flex; flex-direction:column; gap:8px;
+  width:92vw; max-width:420px; width:min(92vw, 420px); pointer-events:none; font-size:15px}
 .toast{pointer-events:auto; padding:12px 16px; border-radius:12px; background:#1f2937; color:#fff; box-shadow:0 10px 30px rgba(0,0,0,.35);
   border-inline-start:4px solid #60a5fa; animation:slideDown .25s ease; line-height:1.4}
 .toast.success{border-color:#34d399} .toast.error{border-color:#f87171} .toast.warn{border-color:#fbbf24}
-html.fill .toasts{font-size:max(15px, .9rem); width:min(92vw, 34rem)}
+html.fill .toasts{font-size:15px; font-size:max(15px, .9rem); max-width:none; width:92vw; width:min(92vw, 34rem)}
 
-.floating{position:fixed; left:50%; transform:translateX(-50%); bottom:max(16px, env(safe-area-inset-bottom)); z-index:55;
+.floating{position:fixed; left:50%; transform:translateX(-50%); bottom:16px; bottom:max(16px, env(safe-area-inset-bottom)); z-index:55;
   display:flex; align-items:center; gap:12px; padding:10px 10px 10px 18px; border-radius:999px; background:rgba(17,24,39,.92); color:#fff;
   box-shadow:0 10px 30px rgba(0,0,0,.4); font-size:15px; max-width:calc(100vw - 24px); animation:slideUp .25s ease}
 .floating .btn{min-height:40px; padding:.4rem 1rem; font-size:14px}
@@ -435,18 +458,18 @@ html.fill .toasts{font-size:max(15px, .9rem); width:min(92vw, 34rem)}
   background:rgba(17,24,39,.85); color:#fff; font-size:.9rem; text-align:center; box-shadow:0 6px 18px rgba(0,0,0,.3); animation:fadeIn .3s ease}
 .unlock svg{width:1.2em; height:1.2em; flex:none; color:var(--warn)}
 html.fill .unlock{font-size:.8rem; padding:.35rem 1rem}
-html.fill .floating{font-size:max(15px, .95rem)}
+html.fill .floating{font-size:15px; font-size:max(15px, .95rem)}
 
 
-.overlay{position:fixed; inset:0; z-index:50; display:grid; place-items:center; padding:5vmin; text-align:center;
+.overlay{position:fixed; top:0; right:0; bottom:0; left:0; z-index:50; display:grid; place-items:center; padding:5vmin; text-align:center;
   background:rgba(4,10,22,.9); color:#fff; animation:fadeIn .4s ease}
-.ov-card{display:flex; flex-direction:column; align-items:center; gap:1.5vmin; max-width:min(92vw, 70rem)}
-.ov-icon svg{width:clamp(48px, 12vmin, 140px); height:clamp(48px, 12vmin, 140px); color:var(--accent)}
-.ov-eyebrow{font-size:clamp(14px, 3vmin, 40px); letter-spacing:.2em; text-transform:uppercase; font-weight:800; color:var(--accent)}
-.ov-title{font-size:clamp(40px, 13vmin, 180px); font-weight:800; line-height:1}
-.ov-ar{font-size:clamp(32px, 10vmin, 140px); line-height:1.2}
-.ov-sub{font-size:clamp(16px, 3.6vmin, 48px); color:rgba(255,255,255,.85); max-width:40ch; line-height:1.35}
-.ov-count{font-size:clamp(36px, 11vmin, 150px); font-weight:800; color:var(--warn)}
+.ov-card{display:flex; flex-direction:column; align-items:center; gap:1.5vmin; max-width:92vw; max-width:min(92vw, 70rem)}
+.ov-icon svg{width:12vmin; height:12vmin; width:clamp(48px, 12vmin, 140px); height:clamp(48px, 12vmin, 140px); color:var(--accent)}
+.ov-eyebrow{font-size:3vmin; font-size:clamp(14px, 3vmin, 40px); letter-spacing:.2em; text-transform:uppercase; font-weight:800; color:var(--accent)}
+.ov-title{font-size:13vmin; font-size:clamp(40px, 13vmin, 180px); font-weight:800; line-height:1}
+.ov-ar{font-size:10vmin; font-size:clamp(32px, 10vmin, 140px); line-height:1.2}
+.ov-sub{font-size:3.6vmin; font-size:clamp(16px, 3.6vmin, 48px); color:rgba(255,255,255,.85); max-width:40ch; line-height:1.35}
+.ov-count{font-size:11vmin; font-size:clamp(36px, 11vmin, 150px); font-weight:800; color:var(--warn)}
 .ov-actions{display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:2vmin; font-size:16px}
 .overlay.iqama .ov-eyebrow, .overlay.iqama .ov-icon svg{color:var(--warn)}
 
@@ -460,11 +483,11 @@ html.fill .floating{font-size:max(15px, .95rem)}
    Settings dialog — fixed px sizing so it stays usable on every screen,
    independent of the mosque-mode root scale.
    ========================================================================== */
-dialog.settings{padding:0; border:0; border-radius:18px; width:min(780px, calc(100vw - 24px)); max-height:min(92vh, 940px); max-height:min(92dvh, 940px);
+dialog.settings{padding:0; border:0; border-radius:18px; width:calc(100vw - 24px); width:min(780px, calc(100vw - 24px)); max-height:92vh; max-height:min(92vh, 940px); max-height:min(92dvh, 940px);
   background:#f4f6fb; color:#1f2937; font:15px/1.45 var(--font); box-shadow:0 30px 80px rgba(0,0,0,.45); overflow:hidden; color-scheme:light}
 dialog.settings[open]{display:flex; flex-direction:column}
 dialog.settings::backdrop{background:rgba(3,7,18,.65);}
-html.fill dialog.settings{font-size:clamp(15px, 1.15vmin + 6px, 19px); width:min(900px, calc(100vw - 24px))}
+html.fill dialog.settings{font-size:16px; font-size:clamp(15px, 1.15vmin + 6px, 19px); width:calc(100vw - 24px); width:min(900px, calc(100vw - 24px))}
 .s-head, .s-tabs, .s-foot{flex:none}
 dialog.settings :focus-visible{outline:3px solid #5b6cf0; outline-offset:-3px; border-radius:8px}
 .s-head{display:flex; align-items:center; gap:12px; padding:16px 16px 0 22px}
@@ -496,7 +519,7 @@ textarea.inp{min-height:84px; resize:vertical}
 .inp.small{min-height:40px; padding:6px 8px}
 .seg{display:inline-flex; flex-wrap:wrap; gap:4px; padding:4px; background:#eef0f6; border-radius:12px}
 .seg label{position:relative}
-.seg input{position:absolute; opacity:0; inset:0; cursor:pointer}
+.seg input{position:absolute; opacity:0; top:0; right:0; bottom:0; left:0; cursor:pointer}
 .seg span{display:block; padding:8px 16px; border-radius:9px; font-weight:600; color:#4b5563; min-height:40px; line-height:24px}
 .seg input:checked + span{background:#fff; color:#3b4cca; box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .seg input:focus-visible + span{outline:3px solid #5b6cf0}
@@ -511,7 +534,7 @@ textarea.inp{min-height:84px; resize:vertical}
 .sw .txt small{display:block; color:#6b7280; font-size:.84em}
 .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
 .chips label{position:relative}
-.chips input{position:absolute; opacity:0; inset:0}
+.chips input{position:absolute; opacity:0; top:0; right:0; bottom:0; left:0}
 .chips span{display:inline-flex; align-items:center; min-height:40px; padding:6px 14px; border-radius:999px; border:1.5px solid #d1d5db; font-weight:600; color:#4b5563; background:#fff}
 .chips input:checked + span{border-color:#5b6cf0; background:#eef0ff; color:#3b4cca}
 .chips input:checked + span::before{content:"✓"; margin-right:6px}
@@ -551,7 +574,7 @@ input[type=color]{width:52px; height:44px; padding:2px; border-radius:10px; bord
 .lp-tiles.small{grid-template-columns:repeat(auto-fill, minmax(112px, 1fr))}
 @media (max-width:560px){ .lp-tiles, .lp-tiles.small{grid-template-columns:1fr 1fr} }
 .lp-tile{position:relative; display:block; cursor:pointer}
-.lp-tile input{position:absolute; opacity:0; inset:0; margin:0; cursor:pointer}
+.lp-tile input{position:absolute; opacity:0; top:0; right:0; bottom:0; left:0; margin:0; cursor:pointer}
 .lp-box{position:relative; display:grid; align-content:start; gap:5px; height:100%; padding:8px 8px 10px; border:2px solid #e5e7eb; border-radius:12px; background:#fff}
 .lp-tile:hover .lp-box{border-color:#c7cdf9}
 .lp-tile input:checked + .lp-box{border-color:#5b6cf0; background:#eef0ff; box-shadow:0 0 0 3px rgba(91,108,240,.25)}
@@ -566,12 +589,12 @@ input[type=color]{width:52px; height:44px; padding:2px; border-radius:10px; bord
 .lp-night .field{flex:1; min-width:0}
 .lp-nightic{flex:none; width:110px}
 /* Focus / Night preview: the dialog hides (keeping unsaved changes) and only this bar stays */
-.vp-bar{display:none; position:fixed; left:50%; top:max(16px, env(safe-area-inset-top)); transform:translateX(-50%); z-index:5; align-items:center; gap:12px;
+.vp-bar{display:none; position:fixed; left:50%; top:16px; top:max(16px, env(safe-area-inset-top)); transform:translateX(-50%); z-index:5; align-items:center; gap:12px;
   padding:8px 8px 8px 16px; border-radius:999px; background:rgba(17,24,39,.92); color:#fff; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.4); visibility:visible; white-space:nowrap}
 dialog.settings.view-preview{visibility:hidden; box-shadow:none}
 dialog.settings.view-preview::backdrop{background:transparent}
 dialog.settings.view-preview .vp-bar{display:flex}
-html.focus-c dialog.settings .vp-bar{top:auto; bottom:max(16px, env(safe-area-inset-bottom))}   /* Focus C keeps its small clock at the top */
+html.focus-c dialog.settings .vp-bar{top:auto; bottom:16px; bottom:max(16px, env(safe-area-inset-bottom))}   /* Focus C keeps its small clock at the top */
 .bg-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(118px, 1fr)); gap:10px; margin-top:10px}
 .bg-opt{position:relative; padding:0; border:2px solid transparent; border-radius:12px; overflow:hidden; background:#e5e7eb; aspect-ratio:4/3; display:block}
 .bg-opt img{width:100%; height:100%; object-fit:cover; display:block}
@@ -1077,7 +1100,7 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
      saved) is the backup when on-device calculation isn't possible.
    • Settings live in localStorage; large uploaded files live in IndexedDB.
    ========================================================================== */
-const APP_VERSION = '2.6.0';
+const APP_VERSION = '2.6.1';
 const PRAYERS = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 const LAYOUTS = ['classic', 'board', 'split', 'sunpath'];
 const LIST_LAYOUTS = ['board', 'split'];   // layouts that show prayers as table rows (Prayer · Adhan · Iqama)
@@ -1683,6 +1706,19 @@ function updateLayoutClasses(s = V) {
   R.classList.toggle('portrait', portrait);
   R.classList.toggle('list-mode', LIST_LAYOUTS.includes(D.layout) || (fill ? portrait : w < 600));
   for (const l of LAYOUTS) R.classList.toggle('lay-' + l, D.layout === l);
+  R.style.setProperty('--app-h', window.innerHeight + 'px');    // the real visible height (Android's 100vh can be taller or shorter)
+  fitRootFont(s);
+}
+/* Older browsers (Chrome before 79) don't understand min()/clamp(), so the screen-sized text rules above are ignored
+   and everything stays at 16px. Work out the same size here instead; modern browsers skip this. */
+const CSS_MINMAX = !!(window.CSS && CSS.supports && CSS.supports('width', 'min(1px, 2px)'));
+function fitRootFont(s = V) {
+  if (CSS_MINMAX) return;
+  const w = window.innerWidth, h = window.innerHeight, sc = Math.min(150, Math.max(80, +s.display.textScale || 100)) / 100;
+  const px = R.classList.contains('fill')
+    ? (R.classList.contains('portrait') ? Math.min(w * .0235, h * .0142) : Math.min(w * .01, h * .018) * 1.55)
+    : Math.min(20, Math.max(15, w * .0045 + 11));
+  R.style.fontSize = (px * sc).toFixed(2) + 'px';
 }
 
 let bgReq = 0, bgSig = null;
@@ -2574,7 +2610,19 @@ async function importSettings(file) {
 }
 
 /* -------------------------------------------------------------- wiring */
+/** Flexbox "gap" arrived in Chrome 84; without it, html.no-flexgap switches to margins. */
+function checkFlexGap() {
+  const d = document.createElement('div');
+  d.style.cssText = 'display:flex;flex-direction:column;row-gap:1px;position:absolute;visibility:hidden';
+  d.appendChild(document.createElement('div')); d.appendChild(document.createElement('div'));
+  document.body.appendChild(d); const ok = d.scrollHeight === 1; d.remove();
+  R.classList.toggle('no-flexgap', !ok);
+}
 function wire() {
+  checkFlexGap();
+  // Show focus rings only for keyboard / TV-remote use, never after a tap or click
+  window.addEventListener('keydown', e => { const k = e.key || ''; if (k === 'Tab' || k.indexOf('Arrow') === 0 || k === 'Enter' || k === ' ') R.classList.add('kbd'); }, true);
+  window.addEventListener('pointerdown', () => R.classList.remove('kbd'), true);
   // Audio unlock on first interaction
   for (const t of ['pointerdown', 'keydown', 'touchstart']) window.addEventListener(t, unlockAudio, { capture: true, passive: true });
   for (const t of ['pointermove', 'pointerdown', 'keydown', 'touchstart']) window.addEventListener(t, () => { if (R.classList.contains('idle') || V.display.mode === 'mosque') updateIdle(); }, { passive: true });

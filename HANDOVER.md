@@ -3,7 +3,7 @@
 > **For a new Claude session / new developer:** read this file first, then `README.md`.
 > Repository: **`nadeemcoorg/Prayer`** on GitHub (default branch `main`, deployed by Netlify).
 > It records what the app is, how it is built, every revision so far, the decisions the owner made (and why), and what is still open.
-> Last updated: **2026-10-06** · Current version: **2.6.0** · Owner: Nadeem Ahmad (GitHub: `nadeemcoorg`)
+> Last updated: **2026-10-06** · Current version: **2.6.1** · Owner: Nadeem Ahmad (GitHub: `nadeemcoorg`)
 
 ---
 
@@ -190,10 +190,19 @@ A single `Index.html` with major bugs found in the first review:
 - `focusAt()`, `nightAt()` and `sunGeom()` are pure and tested. Size +24 KB, no new downloads. Preview harness: optional display-settings argument and a `tv_portrait` scenario.
 - The owner previewed the layouts on the Netlify deploy previews; Focus and Night could not be checked live because they depend on the time of day (see section 8).
 
-### v2.6.0: layout picker with icons, Focus / Night previews (current)
+### v2.6.0: layout picker with icons, Focus / Night previews
 - Settings → Display → Layout: the layout and Focus drop-downs are now **icon tiles** (drawn SVG, `layoutIconSvg()`; radio inputs underneath so saving, Cancel, live preview and keyboard / TV-remote navigation are unchanged). Portrait icons on vertical screens; a dark icon next to the Night setting. Mockup: https://claude.ai/artifact/4iaugrqfTthLHmBotBRJor
 - **Preview Focus / Night for 30 seconds** (`startViewPreview()`, `viewPreviewAt()`): the dialog is hidden, not closed, so unsaved changes stay; "Preview · ends in 0:29" label with Stop at the top (bottom for Focus C). Stop, Esc or the timeout end it; nothing is saved. Focus tiles and preview show in Mosque mode even with Focus off; Home mode explains where Focus is.
 - No `:has()` selectors (older TV browsers). +6 KB; nothing new runs outside Settings. The owner checked it on the deploy preview.
+
+### v2.6.1: older tablets and browsers (current)
+- Reported on a **Huawei T5 tablet with an old Chrome**: empty band under the cards, top-right buttons touching, an orange box around a tapped button.
+- Full screen / Mosque: `.app` takes the **real visible height** (`--app-h`, measured in `updateLayoutClasses()`), so the card grid reaches the bottom on old engines too.
+- Chrome < 79 (no `min()`/`clamp()`): `fitRootFont()` applies the screen-based text size in code; plain fallback values sit before every other `min()`/`max()`/`clamp()`.
+- Chrome < 84 (no flexbox `gap`): `checkFlexGap()` sets `html.no-flexgap` → margins. `inset:0` (Chrome 87+) replaced everywhere (old Chrome gave the background and the adhan screen no size).
+- Focus ring only for keyboard / TV remote (`html.kbd`); no tap highlight.
+- Portrait mosque screens: on Fridays "Jumu'ah" + badge wrapped and pushed Isha off the bottom; names stay on one line, slightly smaller.
+- Modern browsers: every measured box identical at 960×552, 1920×1080, 1080×1920, 1366×800 and phone. Deployed before the owner tested the preview on the T5; **check the T5 on the live site**.
 
 ---
 
