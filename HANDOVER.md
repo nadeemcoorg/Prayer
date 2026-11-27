@@ -251,6 +251,7 @@ A single `Index.html` with major bugs found in the first review:
 
    Recommended: **D + A** now, C later if shared uploads are added. Note: block only when people or animals are the *main subject* (the bundled "Madinah Courtyard" image has small people in it). **Waiting for a decision.**
 4. ~~**Zawal** as a third Makruh window~~: done in v2.4.0 (Hanafi default).
+7. **Usage statistics** (branch `claude/usage-stats`): consent-based daily message → Netlify Function → Netlify Blobs; owner page `/stats.html`. **Before it works live, set `STATS_PASSWORD`** in Netlify environment variables. Only dependency: `@netlify/blobs` 8.2.0, pinned because it has no dependencies of its own (11.x pulls in 29 MB including a native binary, the kind of package that broke the 2.1.1 build).
 5. Phase 2 idea (only if needed): admin uploads that reach all screens instantly (Supabase or Firebase plus an admin page).
 
 ---

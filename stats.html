@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Prayer Times usage</title>
+<style>
+/* Layout: a mockup of the owner's private stats page — headline numbers, a 30-day trend, where screens are, what they run, and a searchable device list for troubleshooting. */
+:root{
+  --bg:#f4f6f5; --surface:#ffffff; --fg:#17201c; --muted:#5d6a63; --line:#dde3df; --grid:#e8ece9;
+  --accent:#1f7a52;                                  /* app's green, darkened for light ground */
+  --series-1:#257de0; --series-2:#f47230;            /* Home, Mosque (categorical slots 1–2) */
+  --bar:#257de0;
+  --warn-bg:#fff4d6; --warn-fg:#7a5200; --crit-bg:#fde3e3; --crit-fg:#9b1c1c; --ok-bg:#e1f3e8; --ok-fg:#1f6b43;
+  --f-ui:system-ui, -apple-system, "Segoe UI", sans-serif; --f-head:system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0f1412; --surface:#171d1a; --fg:#e8efea; --muted:#9aa8a0; --line:#2a332e; --grid:#222a26; --accent:#7ee0a1;
+  --series-1:#338ced; --series-2:#e76624; --bar:#338ced;
+  --warn-bg:#3a2e0a; --warn-fg:#f5cf6a; --crit-bg:#3d1616; --crit-fg:#f4a3a3; --ok-bg:#12301f; --ok-fg:#8fdcae; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0f1412; --surface:#171d1a; --fg:#e8efea; --muted:#9aa8a0; --line:#2a332e; --grid:#222a26; --accent:#7ee0a1;
+  --series-1:#338ced; --series-2:#e76624; --bar:#338ced;
+  --warn-bg:#3a2e0a; --warn-fg:#f5cf6a; --crit-bg:#3d1616; --crit-fg:#f4a3a3; --ok-bg:#12301f; --ok-fg:#8fdcae; color-scheme:dark }
+body{background:var(--bg); color:var(--fg); font:15px/1.5 var(--f-ui)}
+.wrap{max-width:1120px; margin:0 auto; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); padding-block:24px 48px; display:grid; gap:20px}
+h1,h2{font-family:var(--f-head); margin:0; text-wrap:balance}
+h1{font-size:1.6rem}
+h2{font-size:1.05rem}
+.top{display:flex; flex-wrap:wrap; gap:12px 20px; align-items:end; justify-content:space-between}
+.top p{margin:4px 0 0; color:var(--muted); max-width:62ch}
+.example{display:inline-block; padding:3px 10px; border-radius:99px; background:var(--warn-bg); color:var(--warn-fg); font-size:.78rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase}
+.seg{display:inline-flex; gap:4px; padding:4px; border:1px solid var(--line); border-radius:10px; background:var(--surface)}
+.seg button{border:0; background:none; color:var(--muted); font:600 .85rem var(--f-ui); padding:6px 12px; border-radius:7px; cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--fg); color:var(--bg)}
+.seg button:focus-visible, input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.kpis{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:12px}
+@media (max-width:760px){ .kpis{grid-template-columns:repeat(2, minmax(0,1fr))} }
+.kpi{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px 16px; display:grid; gap:2px}
+.kpi .l{font-size:.8rem; color:var(--muted)}
+.kpi .v{font-family:var(--f-head); font-size:1.9rem; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.15}
+.kpi .d{font-size:.8rem; color:var(--muted); font-variant-numeric:tabular-nums}
+.kpi .d b{color:var(--ok-fg)}
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px; display:grid; gap:12px; align-content:start; min-width:0}
+.panel .sub{margin:0; color:var(--muted); font-size:.85rem}
+.two{display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:20px}
+@media (max-width:860px){ .two{grid-template-columns:1fr} }
+.legend{display:flex; gap:16px; font-size:.85rem; color:var(--muted)}
+.legend i{display:inline-block; width:12px; height:3px; border-radius:2px; vertical-align:middle; margin-right:6px}
+.chart{position:relative}
+.chart svg{display:block; width:100%; height:auto}
+.tip{position:absolute; pointer-events:none; background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:6px 10px; font-size:.8rem; box-shadow:0 6px 18px rgba(0,0,0,.12); white-space:nowrap; font-variant-numeric:tabular-nums}
+.tip b{display:block; color:var(--fg)}
+.tip span{color:var(--muted)}
+table{width:100%; border-collapse:collapse; font-size:.86rem; font-variant-numeric:tabular-nums}
+th{text-align:left; font-size:.74rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:700; padding:6px 8px; border-bottom:1px solid var(--line)}
+td{padding:7px 8px; border-bottom:1px solid var(--grid); vertical-align:middle}
+td.n, th.n{text-align:right}
+.barcell{display:flex; align-items:center; gap:8px; min-width:120px}
+.barcell i{display:block; height:8px; border-radius:0 4px 4px 0; background:var(--bar)}
+.scroll{overflow-x:auto}
+.pill{display:inline-block; padding:1px 8px; border-radius:99px; font-size:.74rem; font-weight:700; white-space:nowrap}
+.pill.warn{background:var(--warn-bg); color:var(--warn-fg)} .pill.crit{background:var(--crit-bg); color:var(--crit-fg)} .pill.ok{background:var(--ok-bg); color:var(--ok-fg)}
+.code{font-family:ui-monospace, "SF Mono", Consolas, monospace; font-size:.84rem; white-space:nowrap}
+.search{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+.search input{flex:1; min-width:200px; padding:8px 12px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg); font:inherit}
+.muted{color:var(--muted)}
+.list{display:grid; gap:8px}
+.row{display:grid; grid-template-columns:7.5rem minmax(0,1fr) 3.2rem; gap:10px; align-items:center; font-size:.86rem}
+.row .track{height:8px; background:var(--grid); border-radius:4px; overflow:hidden}
+.row .track i{display:block; height:100%; background:var(--bar); border-radius:0 4px 4px 0}
+.row .n{text-align:right; font-variant-numeric:tabular-nums}
+.note{font-size:.84rem; color:var(--muted); border-top:1px solid var(--line); padding-top:14px}
+
+[hidden]{display:none !important}
+#content{display:grid; gap:20px}
+.go{border:0; border-radius:8px; padding:8px 16px; background:var(--fg); color:var(--bg); font:600 .9rem var(--f-ui); cursor:pointer}
+.err{margin:0; color:var(--crit-fg); background:var(--crit-bg); border-radius:8px; padding:8px 12px; font-size:.88rem}
+.empty{color:var(--muted); font-size:.9rem; padding:12px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+            <h1>Prayer Times usage</h1>
+      <p>Screens that allowed anonymous statistics send one short message a day. <span id="asof"></span></p>
+    </div>
+    <div class="seg" role="group" aria-label="Period">
+      <button type="button" aria-pressed="false" data-p="7">7 days</button>
+      <button type="button" aria-pressed="true" data-p="30">30 days</button>
+      <button type="button" aria-pressed="false" data-p="90">90 days</button>
+    </div>
+  </header>
+
+<form class="panel login" id="login" hidden>
+    <h2>Sign in</h2>
+    <p class="sub">Enter the stats password set in Netlify (Site settings → Environment variables → <span class="code">STATS_PASSWORD</span>).</p>
+    <div class="search"><label for="pw" style="position:absolute; left:-9999px">Password</label><input id="pw" type="password" autocomplete="current-password" placeholder="Password" required>
+    <button class="go" type="submit">Show statistics</button></div>
+    <p class="err" id="err" role="alert" hidden></p>
+  </form>
+  <div id="content" hidden>
+  <section class="kpis" aria-label="Headline numbers">
+    <div class="kpi"><span class="l">Active today</span><span class="v" id="kToday">–</span><span class="d" id="kTodayD">&nbsp;</span></div>
+    <div class="kpi"><span class="l" id="kPeriodL">Active in 30 days</span><span class="v" id="kPeriod">–</span><span class="d">distinct screens</span></div>
+    <div class="kpi"><span class="l">Mosque screens</span><span class="v" id="kMosque">–</span><span class="d" id="kCities">&nbsp;</span></div>
+    <div class="kpi"><span class="l">New this week</span><span class="v" id="kNew">–</span><span class="d">first message this week</span></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-trend">
+    <div class="top" style="align-items:center">
+      <h2 id="h-trend">Active screens per day</h2>
+      <div class="legend"><span><i style="background:var(--series-1)"></i>Home</span><span><i style="background:var(--series-2)"></i>Mosque</span></div>
+    </div>
+    <div class="chart" id="trend"><div class="tip" id="tip" hidden></div></div>
+    <p class="sub">A screen counts once a day, however long it stays open. Screens that were offline send their message when they reconnect.</p>
+  </section>
+
+  <div class="two">
+    <section class="panel" aria-labelledby="h-where">
+      <h2 id="h-where">Where screens are</h2>
+      <p class="sub">City as set in the app, or the area rounded to about 10 km for "My location" screens.</p>
+      <div class="scroll"><table id="cities"><thead><tr><th>City</th><th>Country</th><th class="n">Home</th><th class="n">Mosque</th><th>Active in 30 days</th></tr></thead><tbody></tbody></table></div>
+    </section>
+    <section class="panel" aria-labelledby="h-what">
+      <h2 id="h-what">What they run</h2>
+      <p class="sub">Share of active screens.</p>
+      <h3 class="muted" style="margin:4px 0 0; font-size:.8rem; text-transform:uppercase; letter-spacing:.06em">App version</h3>
+      <div class="list" id="versions"></div>
+      <h3 class="muted" style="margin:8px 0 0; font-size:.8rem; text-transform:uppercase; letter-spacing:.06em">Layout</h3>
+      <div class="list" id="layouts"></div>
+      <h3 class="muted" style="margin:8px 0 0; font-size:.8rem; text-transform:uppercase; letter-spacing:.06em">Browser age</h3>
+      <div class="list" id="browsers"></div>
+    </section>
+  </div>
+
+  <section class="panel" aria-labelledby="h-dev">
+    <h2 id="h-dev">Screens</h2>
+    <p class="sub">For troubleshooting. When someone reports a problem, they read the device number from Settings → Backup &amp; Help.</p>
+    <div class="search">
+      <label class="sr" for="q" style="position:absolute; left:-9999px">Search screens</label>
+      <input id="q" type="search" placeholder="Search by device number, screen name, city, browser or model">
+      <div class="seg" role="group" aria-label="Show">
+        <button type="button" aria-pressed="true" data-f="all">All</button>
+        <button type="button" aria-pressed="false" data-f="attn">Needs attention</button>
+      </div>
+    </div>
+    <div class="scroll"><table id="devices"><thead><tr><th>Device</th><th>Screen name</th><th>City</th><th>Mode · layout</th><th>Version</th><th>Browser · system · model</th><th>Screen</th><th class="n">Errors (24 h)</th><th>Last seen</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  </div>
+  <p class="note">Collected per screen, once a day: a random device number, city (or area rounded to ~10 km), Home/Mosque, layout and feature settings, app version, browser, operating system, device model where the browser reveals it, screen size, and the number of errors. Never collected: names, emails, exact location, IP addresses, error text. Screen names are opt-in. Daily records are deleted after 90 days; monthly totals are kept. Each screen can turn this off in Settings.</p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = function (v) { return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var key = ''; try { key = sessionStorage.getItem('pt.statsKey') || ''; } catch (e) {}
+  var period = 30, data = null, filt = 'all';
+  var NS = 'http://www.w3.org/2000/svg', box = $('#trend'), tip = $('#tip');
+
+  function load() {
+    fetch('/api/usage-stats?days=' + period, { headers: { 'x-stats-key': key }, cache: 'no-store' })
+      .then(function (r) { return r.json().then(function (j) { return { r: r, j: j }; }); })
+      .then(function (x) {
+        if (!x.r.ok) { showLogin(x.j.error || ('Error ' + x.r.status)); return; }
+        try { sessionStorage.setItem('pt.statsKey', key); } catch (e) {}
+        data = x.j; $('#login').hidden = true; $('#content').hidden = false; render();
+      })
+      .catch(function () { showLogin('Could not reach the statistics service. Check your connection and try again.'); });
+  }
+  function showLogin(msg) {
+    $('#content').hidden = true; $('#login').hidden = false;
+    if (msg && key) { $('#err').textContent = msg; $('#err').hidden = false; }
+    try { sessionStorage.removeItem('pt.statsKey'); } catch (e) {}
+    $('#pw').focus();
+  }
+  $('#login').addEventListener('submit', function (e) { e.preventDefault(); key = $('#pw').value; $('#err').hidden = true; load(); });
+
+  function render() {
+    var d = data, k = d.kpi, dl = d.daily;
+    $('#asof').textContent = 'Figures up to ' + d.today + ' (UTC).';
+    $('#kToday').textContent = k.activeToday.toLocaleString();
+    var wk = dl.length > 7 ? dl[dl.length - 8] : null, wkTot = wk ? wk.home + wk.mosque : 0;
+    $('#kTodayD').innerHTML = wkTot ? '<b>' + (k.activeToday >= wkTot ? '+' : '') + Math.round((k.activeToday - wkTot) / wkTot * 100) + '%</b> vs. same day last week' : '&nbsp;';
+    $('#kPeriodL').textContent = 'Active in ' + d.period + ' days';
+    $('#kPeriod').textContent = k.activePeriod.toLocaleString();
+    $('#kMosque').textContent = k.mosque.toLocaleString();
+    $('#kCities').textContent = 'in ' + k.mosqueCities + (k.mosqueCities === 1 ? ' place' : ' places');
+    $('#kNew').textContent = k.newThisWeek.toLocaleString();
+    draw();
+    var cmax = Math.max.apply(null, [1].concat(d.places.map(function (p) { return p.home + p.mosque; })));
+    $('#cities tbody').innerHTML = d.places.length ? d.places.map(function (p) {
+      return '<tr><td>' + esc(p.city) + '</td><td class="muted">' + esc(p.country) + '</td><td class="n">' + p.home + '</td><td class="n">' + p.mosque + '</td><td><span class="barcell"><i style="width:' + Math.round((p.home + p.mosque) / cmax * 100) + 'px"></i>' + (p.home + p.mosque) + '</span></td></tr>';
+    }).join('') : '<tr><td colspan="5" class="empty">No screens yet in this period.</td></tr>';
+    var list = function (id, rows) { $(id).innerHTML = rows.length ? rows.map(function (r) { return '<div class="row"><span>' + esc(r[0]) + '</span><span class="track"><i style="width:' + r[2] + '%"></i></span><span class="n">' + r[2] + '%</span></div>'; }).join('') : '<p class="empty">No data yet.</p>'; };
+    var nice = { classic: 'Classic', board: 'Mosque board', split: 'Split', sunpath: 'Sun path' };
+    list('#versions', d.versions); list('#layouts', d.layouts.map(function (r) { return [nice[r[0]] || r[0], r[1], r[2]]; })); list('#browsers', d.browsers);
+    rows();
+  }
+
+  function draw() {
+    Array.prototype.forEach.call(box.querySelectorAll('svg'), function (s) { s.remove(); });
+    var dl = data.daily, n = dl.length, H = dl.map(function (x) { return x.home; }), M = dl.map(function (x) { return x.mosque; });
+    var W = 760, Ht = 240, L = 40, R = 96, T = 12, B = 28;
+    var top = Math.max.apply(null, [4].concat(H, M)), raw = top / 4, mag = Math.pow(10, Math.floor(Math.log10(raw))), step = [1, 2, 5, 10].map(function (f) { return f * mag; }).filter(function (v) { return v >= raw; })[0], max = step * 4;   // round steps: 1, 2, 5 × 10ⁿ
+    var x = function (i) { return L + i * (W - L - R) / Math.max(1, n - 1); }, y = function (v) { return T + (1 - v / max) * (Ht - T - B); };
+    var svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 ' + W + ' ' + Ht); svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Active screens per day over ' + n + ' days: Home ' + H[n - 1] + ', Mosque ' + M[n - 1] + ' on the last day');
+    var add = function (tag, a) { var e = document.createElementNS(NS, tag); for (var k in a) e.setAttribute(k, a[k]); svg.appendChild(e); return e; };
+    for (var v = 0; v <= max + 1e-9; v += max / 4) { add('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: 'var(--grid)', 'stroke-width': 1 }); add('text', { x: L - 8, y: y(v) + 4, 'text-anchor': 'end', fill: 'var(--muted)', 'font-size': 11 }).textContent = Math.round(v); }
+    var lab = function (i) { return new Date(dl[i].day + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }); };
+    [0, Math.round((n - 1) / 2), n - 1].forEach(function (i) { add('text', { x: x(i), y: Ht - 8, 'text-anchor': i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle', fill: 'var(--muted)', 'font-size': 11 }).textContent = lab(i); });
+    var path = function (arr, col) { add('path', { d: arr.map(function (v, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); }).join(''), fill: 'none', stroke: col, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }); };
+    path(H, 'var(--series-1)'); path(M, 'var(--series-2)');
+    var end = function (arr, col, name) { var i = n - 1; add('circle', { cx: x(i), cy: y(arr[i]), r: 4, fill: col, stroke: 'var(--surface)', 'stroke-width': 2 }); add('text', { x: x(i) + 8, y: y(arr[i]) + 4, fill: 'var(--fg)', 'font-size': 12, 'font-weight': 600 }).textContent = name + ' ' + arr[i]; };
+    end(H, 'var(--series-1)', 'Home'); end(M, 'var(--series-2)', 'Mosque');
+    var cross = add('line', { y1: T, y2: Ht - B, stroke: 'var(--muted)', 'stroke-width': 1, 'stroke-dasharray': '3 3', visibility: 'hidden' });
+    var dots = [add('circle', { r: 4, fill: 'var(--series-1)', stroke: 'var(--surface)', 'stroke-width': 2, visibility: 'hidden' }), add('circle', { r: 4, fill: 'var(--series-2)', stroke: 'var(--surface)', 'stroke-width': 2, visibility: 'hidden' })];
+    var hit = add('rect', { x: L, y: T, width: W - L - R, height: Ht - T - B, fill: 'transparent' });
+    var show = function (ev) {
+      var r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) * W / r.width;
+      var i = Math.max(0, Math.min(n - 1, Math.round((px - L) / ((W - L - R) / Math.max(1, n - 1)))));
+      cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('visibility', 'visible');
+      dots[0].setAttribute('cx', x(i)); dots[0].setAttribute('cy', y(H[i])); dots[1].setAttribute('cx', x(i)); dots[1].setAttribute('cy', y(M[i]));
+      dots.forEach(function (o) { o.setAttribute('visibility', 'visible'); });
+      tip.innerHTML = '<b>' + lab(i) + ' · ' + (H[i] + M[i]) + ' screens</b><span>Home ' + H[i] + ' · Mosque ' + M[i] + '</span>'; tip.hidden = false;
+      var bx = box.getBoundingClientRect(), left = x(i) * r.width / W + 12; if (left > bx.width - 170) left -= 190;
+      tip.style.left = left + 'px'; tip.style.top = '8px';
+    };
+    hit.addEventListener('pointermove', show); hit.addEventListener('pointerdown', show);
+    hit.addEventListener('pointerleave', function () { tip.hidden = true; cross.setAttribute('visibility', 'hidden'); dots.forEach(function (o) { o.setAttribute('visibility', 'hidden'); }); });
+    box.appendChild(svg);
+  }
+
+  var STATUS = { old: ['warn', 'Old browser'], errors: ['crit', 'Many errors'], '': ['ok', 'OK'] };
+  var code = function (id) { return 'PT-' + id.slice(0, 4) + '-' + id.slice(4); };
+  var ago = function (day) { var n = Math.round((Date.parse(data.today) - Date.parse(day)) / 864e5); return n <= 0 ? 'today' : n === 1 ? 'yesterday' : n + ' days ago'; };
+  function rows() {
+    if (!data) return;
+    var s = $('#q').value.trim().toLowerCase().replace(/^pt-/, '').replace(/-/g, '');
+    var list = data.devices.filter(function (d) {
+      if (filt === 'attn' && !d.status) return false;
+      return !s || [d.id, d.name, d.city, d.country, d.browser, d.os, d.model, d.v].join(' ').toLowerCase().replace(/-/g, '').indexOf(s) >= 0;
+    });
+    var nice = { classic: 'Classic', board: 'Board', split: 'Split', sunpath: 'Sun path' };
+    $('#devices tbody').innerHTML = list.length ? list.map(function (d) {
+      var st = STATUS[d.status] || STATUS[''];
+      return '<tr><td class="code">' + code(d.id) + '</td><td>' + (esc(d.name) || '—') + '</td><td>' + esc(d.city || '—') + (d.country ? ' <span class="muted">' + esc(d.country) + '</span>' : '') + '</td><td>' + (d.mode === 'mosque' ? 'Mosque' : 'Home') + ' · ' + (nice[d.layout] || '—') + '</td><td>' + esc(d.v) + '</td><td>' + esc(d.browser) + ' · ' + esc(d.os) + (d.model ? ' · ' + esc(d.model) : '') + '</td><td>' + esc(d.screen) + '</td><td class="n">' + d.errors + '</td><td class="muted">' + ago(d.last) + '</td><td><span class="pill ' + st[0] + '">' + st[1] + '</span></td></tr>';
+    }).join('') : '<tr><td colspan="10" class="empty">No screens match.</td></tr>';
+  }
+  $('#q').addEventListener('input', rows);
+  Array.prototype.forEach.call(document.querySelectorAll('[data-f]'), function (b) { b.addEventListener('click', function () { filt = b.getAttribute('data-f'); Array.prototype.forEach.call(document.querySelectorAll('[data-f]'), function (o) { o.setAttribute('aria-pressed', String(o === b)); }); rows(); }); });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-p]'), function (b) { b.addEventListener('click', function () { period = +b.getAttribute('data-p'); Array.prototype.forEach.call(document.querySelectorAll('[data-p]'), function (o) { o.setAttribute('aria-pressed', String(o === b)); }); if (key) load(); }); });
+  if (key) load(); else showLogin('');
+})();
+</script>
+</body>
+</html>

@@ -5,6 +5,10 @@
   "type": "module",
   "description": "Prayer times display for home and mosque screens",
   "scripts": {
-    "build": "node scripts/build.mjs"
+    "build": "node scripts/build.mjs",
+    "test": "node tests/smoke.test.cjs && node tests/usage.test.mjs"
+  },
+  "dependencies": {
+    "@netlify/blobs": "8.2.0"
   }
 }
