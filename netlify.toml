@@ -2,8 +2,14 @@
 # (For drag-and-drop deploys this file is ignored and the folder is published as-is.)
 [build]
   # Runs the build script; if it fails for any reason, the site is published as-is instead.
-  command = "node scripts/build.mjs || (echo 'Build script failed - publishing files as-is' && rm -rf dist && mkdir -p dist && cp -r index.html sw.js manifest.json manifest.js app.webmanifest icons images sounds dist/)"
+  command = "node scripts/build.mjs || (echo 'Build script failed - publishing files as-is' && rm -rf dist && mkdir -p dist && cp -r index.html stats.html sw.js manifest.json manifest.js app.webmanifest icons images sounds dist/)"
   publish = "dist"
+
+# Usage statistics: small server functions (netlify/functions), data kept in Netlify Blobs.
+# The stats page needs STATS_PASSWORD set in Netlify → Site settings → Environment variables.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
 
 # Always check for a fresh copy of the app, its manifest and the offline worker
 [[headers]]
@@ -32,3 +38,8 @@
   for = "/sounds/*"
   [headers.values]
     Cache-Control = "public, max-age=604800"
+[[headers]]
+  for = "/stats.html"
+  [headers.values]
+    Cache-Control = "no-store"
+    X-Robots-Tag = "noindex, nofollow"

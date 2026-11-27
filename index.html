@@ -439,6 +439,12 @@ html.no-flexgap .p-row > * + *{margin-top:.2rem}
 button, a, label, input, select, [role="button"]{-webkit-tap-highlight-color:transparent}
 html:not(.kbd) :focus{outline:none !important}
 
+/* ---------- Usage statistics consent ---------- */
+.linkbtn{background:none; border:0; padding:0; color:inherit; text-decoration:underline; font:inherit; cursor:pointer}
+.usage-detail{flex:1 1 100%; font-size:.9em}
+.usage-detail ul{margin:.3rem 0; padding-left:1.2em}
+.usage-detail p{margin:.3rem 0 0; opacity:.85}
+
 /* ---------- Floating UI ---------- */
 .toasts{position:fixed; top:12px; top:max(12px, env(safe-area-inset-top)); left:50%; transform:translateX(-50%); z-index:60; display:flex; flex-direction:column; gap:8px;
   width:92vw; max-width:420px; width:min(92vw, 420px); pointer-events:none; font-size:15px}
@@ -690,6 +696,14 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
     <p id="installText">Add Prayer Times to your home screen — it opens like an app and works offline.</p>
     <button class="btn primary" type="button" id="installGo">Install</button>
     <button class="x" type="button" id="installClose" aria-label="Not now">×</button>
+  </section>
+
+  <section class="panel notice usage-ask" id="usageAsk" hidden>
+    <p><b>Help improve Prayer Times?</b> With your permission this screen sends one short anonymous message a day, so the developer can see how many screens use the app and fix problems on older devices.
+      <button class="linkbtn" type="button" id="usageWhat" aria-expanded="false" aria-controls="usageList1">What is sent?</button></p>
+    <div class="usage-detail" id="usageList1" hidden></div>
+    <button class="btn primary" type="button" id="usageYes">Allow</button>
+    <button class="btn ghost" type="button" id="usageNo">No thanks</button>
   </section>
 
   <section class="panel notice" id="onboarding" hidden>
@@ -1033,6 +1047,19 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
         <p class="hint" id="installHelp"></p>
         <div class="btn-row"><button class="sbtn primary" type="button" id="btnInstall2" hidden>Install app</button></div>
       </section>
+      <section class="card" id="usageCard">
+        <h3>Anonymous usage statistics</h3>
+        <p class="hint">Sends one short message a day so the developer can count screens and fix problems on older devices. Nothing is sent unless you allow it.</p>
+        <div class="seg" role="radiogroup" aria-label="Usage statistics" style="margin-top:8px">
+          <label><input type="radio" name="usage" value="yes" data-k="usage"><span>Allow</span></label>
+          <label><input type="radio" name="usage" value="no" data-k="usage"><span>Don't send</span></label>
+        </div>
+        <details class="fb-preview"><summary>What is sent, once a day</summary><div class="usage-detail" id="usageList2"></div></details>
+        <div class="field"><label for="fUsageName">Screen name <span class="hint" style="display:inline">(optional, e.g. Main hall TV)</span></label>
+          <input class="inp" id="fUsageName" maxlength="40" placeholder="Leave empty to send no name">
+          <p class="hint">Saved on this screen only (not copied by Export), and sent only when statistics are allowed.</p></div>
+        <p class="hint" id="usageInfo"></p>
+      </section>
       <section class="card">
         <h3>Backup &amp; copy to other screens</h3>
         <p class="hint">Export your settings to a file and import it on another computer or TV — handy when a mosque has several displays.</p>
@@ -1102,7 +1129,7 @@ table.cmp th{font-size:.8em; text-transform:uppercase; letter-spacing:.06em; col
      saved) is the backup when on-device calculation isn't possible.
    • Settings live in localStorage; large uploaded files live in IndexedDB.
    ========================================================================== */
-const APP_VERSION = '2.6.1';
+const APP_VERSION = '2.7.0';
 const PRAYERS = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 const LAYOUTS = ['classic', 'board', 'split', 'sunpath'];
 const LIST_LAYOUTS = ['board', 'split'];   // layouts that show prayers as table rows (Prayer · Adhan · Iqama)
@@ -1135,6 +1162,7 @@ const DEFAULTS = {
   v: 2, configured: false,
   location: { mode: 'city', city: 'Tokyo', country: 'Japan', lat: '', lon: '', label: '', resolved: null },
   method: 3, school: 0, latAdj: '', timezone: 'auto', source: 'auto',
+  usage: 'ask',                                         // anonymous daily usage message: ask | yes | no (nothing is sent before 'yes')
   offsets: { Fajr: 0, Sunrise: 0, Dhuhr: 0, Asr: 0, Maghrib: 0, Isha: 0 },
   iqama: {
     Fajr: { type: 'offset', value: 20, time: '' }, Dhuhr: { type: 'offset', value: 15, time: '' },
@@ -1282,6 +1310,7 @@ function loadSettings() {
   if (!bgIds.includes(s.display.background)) s.display.background = '';
   if (s.timezone !== 'auto' && !tzValid(s.timezone)) s.timezone = 'auto';
   if (!['auto', 'aladhan'].includes(s.source)) s.source = 'auto';
+  if (!['ask', 'yes', 'no'].includes(s.usage)) s.usage = 'ask';
   s.display.makruhMin = Math.min(60, Math.max(5, Math.round(+s.display.makruhMin || 20)));
   s.display.zawalMin = Math.min(30, Math.max(3, Math.round(+s.display.zawalMin || 10)));
   if (!LAYOUTS.includes(s.display.layout)) s.display.layout = 'classic';
@@ -2444,6 +2473,7 @@ function updateDependent() {
   setText($('#oVol'), draft.alerts.volume + '%'); setText($('#oDim'), draft.display.dim + '%');
   setText($('#oOpacity'), draft.display.panelOpacity + '%'); setText($('#oScale'), draft.display.textScale + '%');
   setText($('#notifStatus'), notifStatusText());
+  if ($('#usageInfo')) renderUsageCard();
   drawLayoutIcons();
   for (const b of $$('[data-bg]', dlg)) b.setAttribute('aria-pressed', String(b.dataset.bg === draft.display.background));
   const c = Object.keys(cache.months || {}).sort();
@@ -2509,7 +2539,7 @@ function selectTab(name) {
 function openSettings(tab) {
   if (dlg.open) { selectTab(tab || lastTab); return; }
   draft = clone(settings); V = draft; delete dlg.dataset.iconSig;
-  renderSoundList(); renderBgGrid(); fillForm(); selectTab(tab || lastTab);
+  renderSoundList(); renderBgGrid(); fillForm(); renderUsageCard(); selectTab(tab || lastTab);
   $('#locError').hidden = true; setText($('#geoStatus'), '');
   dlg.showModal(); updateUnlockBar(); R.classList.remove('idle');
 }
@@ -2540,7 +2570,8 @@ function saveSettings() {
 }
 function afterSettingsChange(locChanged) {
   version++; rowsSig = ''; lastHijriSig = '';
-  applyVisual(settings); updateWakeLock(); updateUnlockBar(); updateOnboarding(); updateInstallUI();
+  applyVisual(settings); updateWakeLock(); updateUnlockBar(); updateOnboarding(); updateInstallUI(); updateUsageAsk();
+  if (settings.usage === 'yes') setTimeout(sendUsage, 3000);
   localMemo.clear();
   if (locChanged || settings.source === 'aladhan') ensureData(); // old times stay visible until the new ones are ready
   tick();
@@ -2813,7 +2844,7 @@ function diagnostics() {
   const cal = src.r ? calibFor(src.r) : null;
   const errs = (store.get('pr.errors', []) || []).slice(-15).map(x => `${new Date(x.t).toISOString().slice(0, 16)} [${x.a}] ${x.m}${x.n > 1 ? ` (x${x.n})` : ''}`);
   return [
-    `App ${APP_VERSION} · ${settings.display.mode} mode · ${isStandalone() ? 'installed app' : 'browser'} · ${location.protocol.replace(':', '')}`,
+    `App ${APP_VERSION} · ${settings.display.mode} mode · ${isStandalone() ? 'installed app' : 'browser'} · ${location.protocol.replace(':', '')}${store.get('pr.usageId', null) ? ` · device ${usageCode(store.get('pr.usageId', ''))}` : ''}`,
     `Browser: ${navigator.userAgent}`,
     `Screen: ${window.innerWidth}×${window.innerHeight} · ${navigator.language || ''} · online: ${navigator.onLine}`,
     `Location: ${where} · tz ${currentTz()} · source ${src.kind}${src.stale ? ' (stale)' : ''} · status ${status.kind}`,
@@ -2863,6 +2894,79 @@ async function sendFeedback() {
 }
 function openFeedback(type) { openSettings('feedback'); if (type) $('#fbType').value = type; setTimeout(() => $('#fbMsg').focus(), 60); }
 
+/* ---------------------------------------------------------- usage statistics
+   Only after this screen's user chose "Allow": one short message a day to /api/usage (a Netlify function).
+   The device number lives outside the settings, so Export / Import never copies it to another screen. */
+const USAGE_ITEMS = [
+  'A random device number for this screen (no name, email or account)',
+  'The city and country set in the app, or the area rounded to about 10 km when using "My location"',
+  'Home or Mosque mode, the layout, and whether Focus and Night are on',
+  'App version, browser, operating system, device model and screen size',
+  'How many errors happened in the last day (only the number, not the messages)',
+  'The screen name, only if you type one in Settings'
+];
+const USAGE_NEVER = 'Never sent: your name, email, exact location, IP address or error messages. Records are deleted after 90 days.';
+const ID_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function usageId() {
+  let id = store.get('pr.usageId', null);
+  if (!/^[A-HJ-NP-Z2-9]{8}$/.test(id || '')) {
+    const b = new Uint8Array(8);
+    if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(b); else for (let i = 0; i < 8; i++) b[i] = Math.random() * 256 | 0;
+    id = Array.prototype.map.call(b, x => ID_CHARS[x % 32]).join(''); store.set('pr.usageId', id);
+  }
+  return id;
+}
+const usageCode = id => `PT-${id.slice(0, 4)}-${id.slice(4)}`;
+let usageHints = null;
+function loadUsageHints() {
+  try { const u = navigator.userAgentData; if (u && u.getHighEntropyValues) u.getHighEntropyValues(['model', 'platformVersion']).then(h => { usageHints = { model: h.model || '', platformVersion: h.platformVersion || '' }; }).catch(() => { }); } catch { }
+}
+/** What the daily message contains (also shown, item by item, in USAGE_ITEMS). */
+function usagePayload() {
+  const L = settings.location, r = L.resolved || {}, D = settings.display;
+  const parts = String(r.name || '').split(', ');
+  const byCity = L.mode === 'city' && String(L.city || '').trim();
+  const lat = parseFloat(r.lat != null ? r.lat : L.lat), lon = parseFloat(r.lon != null ? r.lon : L.lon);
+  const errors = (store.get('pr.errors', []) || []).filter(x => Date.now() - x.t < DAY).reduce((n, x) => n + (x.n || 1), 0);
+  return {
+    id: usageId(), v: APP_VERSION, mode: D.mode, layout: D.layout,
+    focus: D.mode === 'mosque' && D.focus ? D.focusLayout : 'off', night: D.night,
+    city: byCity ? (parts[0] || L.city) : '', country: byCity ? (parts.length > 1 ? parts[parts.length - 1] : (L.country || '')) : '',
+    lat: isFinite(lat) ? Math.round(lat * 10) / 10 : null, lon: isFinite(lon) ? Math.round(lon * 10) / 10 : null,     // about 10 km, never exact
+    tz: currentTz(), ua: navigator.userAgent, uaData: usageHints,
+    screen: `${screen.width}x${screen.height}`, dpr: window.devicePixelRatio || 1, installed: isStandalone(),
+    old: { minmax: !CSS_MINMAX, flexgap: R.classList.contains('no-flexgap') },
+    errors, name: String(store.get('pr.usageName', '') || '').slice(0, 40)
+  };
+}
+let usageBusy = false;
+async function sendUsage() {
+  if (settings.usage !== 'yes' || usageBusy || !/^https?:$/.test(location.protocol) || navigator.onLine === false) return;
+  const day = wallNow(currentTz()).key; if (store.get('pr.usageSent', '') === day) return;
+  usageBusy = true;
+  try {
+    const r = await fetch('/api/usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(usagePayload()), keepalive: true });
+    if (r.ok || (r.status >= 400 && r.status < 500)) store.set('pr.usageSent', day);      // a refused message is not retried all day
+  } catch { } finally { usageBusy = false; }
+}
+function usageDetailHtml() {
+  return '<ul>' + USAGE_ITEMS.map(t => `<li>${t.replace(/[<>&]/g, '')}</li>`).join('') + `</ul><p>${USAGE_NEVER}</p>`;
+}
+function updateUsageAsk() {
+  $('#usageAsk').hidden = !(settings.configured && settings.usage === 'ask' && /^https?:$/.test(location.protocol));
+}
+function setUsage(v) {
+  settings.usage = v; persistSettings(); updateUsageAsk();
+  if (v === 'yes') { toast('Thank you. You can change this any time in Settings → Backup & Help.', 'success', 6000); sendUsage(); }
+}
+function renderUsageCard() {
+  const id = store.get('pr.usageId', null), sent = store.get('pr.usageSent', '');
+  if (document.activeElement !== $('#fUsageName')) $('#fUsageName').value = store.get('pr.usageName', '') || '';
+  // The device number is created only once statistics are allowed and saved
+  setText($('#usageInfo'), settings.usage === 'yes' || id ? `Device number: ${usageCode(usageId())}${sent ? ` · last sent ${sent}` : ''}. Quote it when reporting a problem.`
+    : (draft && draft.usage === 'yes' ? 'Press Save to allow. A device number then appears here.' : 'A device number appears here once you allow statistics.'));
+}
+
 /* ---------------------------------------------------------------- init */
 async function init() {
   manifest = await loadManifest();
@@ -2876,6 +2980,12 @@ async function init() {
   $('#fbSend').addEventListener('click', sendFeedback);
   $('#fbPreview').addEventListener('toggle', e => { if (e.target.open) setText($('#fbDiagText'), diagnostics()); });
   window.addEventListener('online', flushOutbox); setTimeout(flushOutbox, 8000);
+  $('#usageList1').innerHTML = usageDetailHtml(); $('#usageList2').innerHTML = usageDetailHtml();
+  $('#usageWhat').addEventListener('click', e => { const l = $('#usageList1'); l.hidden = !l.hidden; e.currentTarget.setAttribute('aria-expanded', String(!l.hidden)); });
+  $('#usageYes').addEventListener('click', () => setUsage('yes')); $('#usageNo').addEventListener('click', () => setUsage('no'));
+  $('#fUsageName').addEventListener('change', e => store.set('pr.usageName', e.target.value.trim().slice(0, 40)));
+  updateUsageAsk(); loadUsageHints();
+  window.addEventListener('online', sendUsage); setTimeout(sendUsage, 20000); setInterval(sendUsage, 30 * 60000);
   $('#installGo').addEventListener('click', doInstall); $('#btnInstall').addEventListener('click', doInstall);
   $('#btnInstall2').addEventListener('click', doInstall);
   $('#installClose').addEventListener('click', () => { store.set('pr.installSnooze', Date.now() + 14 * DAY); updateInstallUI(); });

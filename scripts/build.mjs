@@ -57,7 +57,7 @@ const copy = async (rel) => {
   if (!(await exists(from))) { console.warn('  ⚠ missing, skipped:', rel); return; }
   await fs.mkdir(path.dirname(to), { recursive: true }); await fs.copyFile(from, to);
 };
-for (const f of ['index.html', 'manifest.json', 'manifest.js', 'app.webmanifest']) await copy(f);
+for (const f of ['index.html', 'stats.html', 'manifest.json', 'manifest.js', 'app.webmanifest']) await copy(f);
 for (const f of await list(path.join(root, 'icons'), /\.(png|svg|ico)$/i)) await copy(path.join('icons', f));
 for (const img of images) {
   if (img.optimized) await copy(path.join('images', 'optimized', img.filename)); else await copy(path.join('images', img.filename));

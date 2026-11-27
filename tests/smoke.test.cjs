@@ -10,19 +10,19 @@ function stub(name='stub'){const store={};const f=function(){};return new Proxy(
    if(k==='querySelectorAll') return ()=>[]; if(k==='hidden'||k==='open'||k==='paused') return store[k]??(k==='paused'); if(k==='textContent'||k==='value'||k==='src'||k==='className') return store[k]??'';
    if(k==='length') return 0; return stub(name+'.'+String(k)); },
  set(t,k,v){store[k]=v;return true}, apply(){return stub(name+'()')}, construct(){return stub('new '+name)} });}
-const mem={}; const posts=[]; const J=o=>({ok:true,status:200,json:async()=>o});
+const mem={}; const posts=[]; const usagePosts=[]; const J=o=>({ok:true,status:200,json:async()=>o});
 const ctx={console:{log(){},info(){},warn(){},error:(...a)=>errors.push(a.join(' '))},URLSearchParams,AbortController,setTimeout:(f,ms)=>{if(ms<=20) Promise.resolve().then(f); return 1},clearTimeout(){},setInterval:()=>1,clearInterval(){},
  Intl,Date,Math,JSON,Promise,Object,Array,String,Number,Set,Map,Error,TypeError,isFinite,parseInt,Blob:function(){},URL:{createObjectURL:()=>'blob:x',revokeObjectURL(){}},FileReader:function(){},
  localStorage:{getItem:k=>k in mem?mem[k]:null,setItem:(k,v)=>{mem[k]=String(v)},removeItem:k=>delete mem[k]},
- location:{protocol:'https:'},navigator:{onLine:true,userAgent:'Mozilla/5.0 (iPhone)',platform:'iPhone',maxTouchPoints:5},document:stub('document'),innerWidth:390,innerHeight:844,
+ location:{protocol:'https:'},screen:{width:1920,height:1200},navigator:{onLine:true,userAgent:'Mozilla/5.0 (iPhone)',platform:'iPhone',maxTouchPoints:5},document:stub('document'),innerWidth:390,innerHeight:844,
  matchMedia:q=>({matches:/coarse/.test(q),addEventListener(){}}),addEventListener(){},Audio:function(){return stub('audio')},Image:function(){return stub('img')},
  fetch:async(u,o)=>{ if(u.includes('open-meteo')) return J({results:[{name:'London',latitude:51.5074,longitude:-0.1278,timezone:'Europe/London',country:'United Kingdom',country_code:'GB',admin1:'England'}]});
    if(u.includes('/v1/timings/')) return J({code:200,data:{timings:{Fajr:'05:11',Sunrise:'07:03',Dhuhr:'12:50',Asr:'15:56',Maghrib:'18:36',Isha:'20:21'},meta:{timezone:'Europe/London'}}});
-   if(u.includes('manifest.json')) return J({images:[],sounds:[]}); if(u==='/'){posts.push(o); return {ok:true,status:200}}; throw new Error('unexpected '+u)}};
+   if(u.includes('manifest.json')) return J({images:[],sounds:[]}); if(u==='/'){posts.push(o); return {ok:true,status:200}}; if(u==='/api/usage'){usagePosts.push(JSON.parse(o.body)); return {ok:true,status:204}}; throw new Error('unexpected '+u)}};
 ctx.window=ctx; vm.createContext(ctx);
 process.on('unhandledRejection',e=>errors.push('UNHANDLED '+(e&&e.stack||e)));
 mem['pr.settings.v2']=JSON.stringify({configured:true,location:{mode:'city',city:'London',country:'United Kingdom'},display:{mode:'home'}});
-try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,hideOverlay,schedule,wallNow,currentTz,prayerState,makruhAt,focusAt,nightAt,sunGeom,layoutIconSvg,viewPreviewAt,hijriOf,checkAlerts,installState,diagnostics,logError,flushOutbox,postFeedback,get firedKeys(){return fired.keys},resetFired(){fired={day:'',keys:[]}},get settings(){return settings},applyVisual,onAdhan,onIqama,onReminder,refreshManifest,compareWithAladhan,sourceInfo};`,ctx);}catch(e){errors.push('SYNC '+e.stack)}
+try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,hideOverlay,schedule,wallNow,currentTz,prayerState,makruhAt,focusAt,nightAt,sendUsage,sunGeom,layoutIconSvg,viewPreviewAt,hijriOf,checkAlerts,installState,diagnostics,logError,flushOutbox,postFeedback,get firedKeys(){return fired.keys},resetFired(){fired={day:'',keys:[]}},get settings(){return settings},applyVisual,onAdhan,onIqama,onReminder,refreshManifest,compareWithAladhan,sourceInfo};`,ctx);}catch(e){errors.push('SYNC '+e.stack)}
 (async()=>{
  for(let i=0;i<5;i++) await new Promise(r=>setImmediate(r));
  const T=ctx.__T; let ok=0,bad=0; const eq=(a,b,m)=>{const p=JSON.stringify(a)===JSON.stringify(b);p?ok++:bad++;console.log((p?'PASS ':'FAIL ')+m+(p?'':`  got ${JSON.stringify(a)} exp ${JSON.stringify(b)}`))};
@@ -99,9 +99,19 @@ try{ vm.runInContext(src+`;this.__T={tick,openSettings,saveSettings,showOverlay,
  eq(['classic','board','split','sunpath','a','b','c'].map(k=>/^<svg viewBox="0 0 160 90"/.test(T.layoutIconSvg(k))),[true,true,true,true,true,true,true],'Layout picker: an icon for every layout and Focus A/B/C');
  eq([/viewBox="0 0 90 160"/.test(T.layoutIconSvg('board',true)), /#07080c/.test(T.layoutIconSvg('split',false,true)), T.layoutIconSvg('nope')],[true,true,''],'Layout picker: portrait and Night versions; unknown layout draws nothing');
  { const p={kind:'night',until:1e6}; eq([T.viewPreviewAt(1e6-1,p),T.viewPreviewAt(1e6,p),T.viewPreviewAt(5,null)],['night',null,null],'Preview: on for its 30 seconds, then off by itself'); }
+ // Anonymous usage statistics: nothing before consent, then one short message a day
+ eq(T.settings.usage,'ask','Usage statistics start as "ask"');
+ await T.sendUsage(); eq(usagePosts.length,0,'Nothing is sent before the user allows it');
+ T.settings.usage='yes'; await T.sendUsage(); await T.sendUsage();
+ const up=usagePosts[0]||{};
+ eq([usagePosts.length, /^[A-HJ-NP-Z2-9]{8}$/.test(up.id), up.lat===Math.round(up.lat*10)/10, up.city, up.mode],[1,true,true,'London','home'],'After "Allow": one message a day, random device number, location rounded to ~10 km');
+ eq(['email','ip','message'].some(k=>k in up),false,'The message carries no email, IP or error text');
+ T.settings.usage='ask';
+ // Old tablets (Chrome before 80) stop on newer syntax: keep the app script free of it
+ eq([/\?\.(?!\d)/.test(src.replace(/'[^'\n]*'|`[^`]*`/g,'')), /\?\?/.test(src)],[false,false],'No optional chaining (?.) or ?? in the app (old Chrome would stop)');
  // feedback
  T.logError('audio','NotAllowedError: play() failed'); T.logError('audio','NotAllowedError: play() failed');
- const dg=T.diagnostics(); eq(/App 2\.6\.1/.test(dg) && /London/.test(dg) && /\[audio\].*\(x2\)/.test(dg) && !/51\.5074/.test(dg),true,'diagnostics: version, city, de-duplicated errors, no exact GPS');
+ const dg=T.diagnostics(); eq(/App 2\.7\.0/.test(dg) && /London/.test(dg) && /\[audio\].*\(x2\)/.test(dg) && !/51\.5074/.test(dg),true,'diagnostics: version, city, de-duplicated errors, no exact GPS');
  mem['pr.outbox']=JSON.stringify([{type:'Problem',message:'Adhan did not play',email:''}]);
  await T.flushOutbox(); eq(posts.length,1,'saved (offline) feedback is sent when online');
  const b=new URLSearchParams(posts[0].body); eq([b.get('form-name'),b.get('type'),posts[0].headers['Content-Type']],['feedback','Problem','application/x-www-form-urlencoded'],'posted as Netlify form "feedback" (url-encoded)');

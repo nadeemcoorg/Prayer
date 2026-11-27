@@ -52,6 +52,26 @@ Users can send suggestions, problems or "wrong prayer time" reports from **Setti
 
 Every message is also kept under **Forms → feedback** in Netlify.
 
+## Anonymous usage statistics (only with permission)
+
+When a screen is set up, it asks once: **"Help improve Prayer Times?"**. Nothing is sent unless someone taps **Allow**, and the choice can be changed any time in Settings → Backup & Help.
+
+If allowed, the screen sends one short message a day with:
+- a random device number for that screen (no name, email or account);
+- the city and country set in the app, or the area rounded to about 10 km when using "My location";
+- Home or Mosque mode, the layout, and whether Focus and Night are on;
+- app version, browser, operating system, device model and screen size;
+- how many errors happened in the last day (the number only);
+- a screen name, only if one is typed in Settings.
+
+Never sent: names, emails, exact location, IP addresses or error messages. Daily records are deleted after 90 days; only monthly totals are kept.
+
+**Seeing the numbers (owner only):** open `/stats.html` on the site and enter the stats password. One-time setup in Netlify:
+1. **Site configuration → Environment variables → Add a variable**: key `STATS_PASSWORD`, value a long password of your choice.
+2. Deploy again (Deploys → Trigger deploy) so the functions pick it up.
+
+The data is kept in Netlify Blobs (part of the Netlify site, no other service). The functions are in `netlify/functions/` and run on Netlify only; a drag-and-drop deploy skips them and screens simply don't send statistics.
+
 ## Deploying on Netlify
 
 **Option A: drag and drop.** Drag this folder onto Netlify.
@@ -145,4 +165,6 @@ chrome.exe --kiosk --autoplay-policy=no-user-gesture-required https://YOUR-SITE.
 | `sounds/` | Adhan audio |
 | `_backup/` | The original version, kept for reference |
 | `HANDOVER.md` | Project history, decisions and open items — read first when continuing development |
-| `tests/` | Automated test (`node tests/smoke.test.cjs`) and visual preview tool |
+| `stats.html` | Owner's usage statistics page (password-protected through the functions) |
+| `netlify/functions/`, `netlify/usage-core.mjs` | Usage statistics: receive the daily message, serve the stats, daily clean-up |
+| `tests/` | Automated tests (`npm test`: `smoke.test.cjs` and `usage.test.mjs`) and the visual preview tool |
