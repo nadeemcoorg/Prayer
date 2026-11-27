@@ -242,7 +242,6 @@ A single `Index.html` with major bugs found in the first review:
 2. ~~**Layouts**~~: done in v2.5.0. Hooks in `index.html`: `LAYOUTS`, the `lay-*` class on `<html>`, `focusAt()` / `nightAt()` and `applyAuto()` in `tick()`, one marked block per feature in the CSS, in Settings → Display → Layout and in the smoke test. Follow-ups:
    - ~~a way to preview Focus and Night~~: done in v2.6.0 (30-second preview buttons);
    - Mockup page: https://claude.ai/artifact/Umajse7HnkW9ePa86atVH6
-6. **Small bug (from before v2.5.0):** in 12-hour mode the Ishraq line on the Sunrise card reads "5:59 الشروقAM" (the AM lands in the wrong place inside the Arabic text).
 3. **Photo validation** (block people, animals, cartoons, hearts, emoji and so on in user uploads). Options discussed:
    - (A) on-device object/face detection, ~5–8 MB, catches people and animals;
    - (B) on-device zero-shot model (CLIP), ~90–150 MB, catches everything but is slow;
@@ -252,6 +251,8 @@ A single `Index.html` with major bugs found in the first review:
    Recommended: **D + A** now, C later if shared uploads are added. Note: block only when people or animals are the *main subject* (the bundled "Madinah Courtyard" image has small people in it). **Waiting for a decision.**
 4. ~~**Zawal** as a third Makruh window~~: done in v2.4.0 (Hanafi default).
 5. Phase 2 idea (only if needed): admin uploads that reach all screens instantly (Supabase or Firebase plus an admin page).
+6. **Small bug (from before v2.5.0):** in 12-hour mode the Ishraq line on the Sunrise card reads "5:59 الشروقAM" (the AM lands in the wrong place inside the Arabic text).
+7. **Usage statistics** (branch `claude/usage-stats`): consent-based daily message → Netlify Function → Netlify Blobs; owner page `/stats.html`. **Before it works live, set `STATS_PASSWORD`** in Netlify environment variables. Only dependency: `@netlify/blobs` 8.2.0, pinned because it has no dependencies of its own (11.x pulls in 29 MB including a native binary, the kind of package that broke the 2.1.1 build).
 
 ---
 
@@ -264,4 +265,3 @@ A single `Index.html` with major bugs found in the first review:
    - bump the version (`APP_VERSION` in `index.html`, `VERSION` in `sw.js`, `package.json`);
    - add a line to section 5;
    - commit and push to a branch, then merge into `main` (Netlify deploys `main`).
-7. **Usage statistics** (branch `claude/usage-stats`): consent-based daily message → Netlify Function → Netlify Blobs; owner page `/stats.html`. **Before it works live, set `STATS_PASSWORD`** in Netlify environment variables. Only dependency: `@netlify/blobs` 8.2.0, pinned because it has no dependencies of its own (11.x pulls in 29 MB including a native binary, the kind of package that broke the 2.1.1 build).
