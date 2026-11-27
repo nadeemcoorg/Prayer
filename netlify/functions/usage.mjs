@@ -1,6 +1,6 @@
 // POST /api/usage — a screen's once-a-day anonymous usage message (only sent after the screen's user agreed).
 import { getStore } from '@netlify/blobs';
-import { sanitize, mergeDevice, MAX_BODY } from '../usage-core.mjs';
+import { sanitize, mergeDevice, MAX_BODY, storeName } from '../usage-core.mjs';
 
 export default async (req, context) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
@@ -10,7 +10,7 @@ export default async (req, context) => {
   const today = new Date().toISOString().slice(0, 10);
   const rec = sanitize(body, (context && context.geo) || {}, today);      // the IP address is never read or stored
   if (!rec) return new Response('Rejected', { status: 400 });
-  const store = getStore('usage');
+  const store = getStore(storeName(context));
   const key = 'dev/' + rec.id;
   const prev = await store.get(key, { type: 'json' }).catch(() => null);
   await store.setJSON(key, mergeDevice(prev, rec));

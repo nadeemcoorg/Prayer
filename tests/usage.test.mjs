@@ -1,5 +1,5 @@
 // Usage statistics (server side): run with  node tests/usage.test.mjs
-import { parseAgent, sanitize, mergeDevice, summarize, prune, samePassword, KEEP_DAYS } from '../netlify/usage-core.mjs';
+import { parseAgent, sanitize, mergeDevice, summarize, prune, samePassword, storeName, KEEP_DAYS } from '../netlify/usage-core.mjs';
 
 let ok = 0, bad = 0;
 const eq = (a, b, m) => { const p = JSON.stringify(a) === JSON.stringify(b); p ? ok++ : bad++; console.log((p ? 'PASS ' : 'FAIL ') + m + (p ? '' : `  got ${JSON.stringify(a)} exp ${JSON.stringify(b)}`)); };
@@ -55,5 +55,7 @@ eq([pr.drop, pr.monthly['2026-08'], pr.monthly['2026-11']], [['CCCCCCCC'], 1, 3]
 
 // Password
 eq([samePassword('secret', 'secret'), samePassword('secreT', 'secret'), samePassword('', ''), samePassword('x', '')], [true, false, false, false], 'Stats password check (empty password never matches)');
+
+eq([storeName({ deploy: { context: 'production' } }), storeName({ deploy: { context: 'deploy-preview' } }), storeName(undefined)], ['usage', 'usage-preview', 'usage-preview'], 'Preview links never write into the live statistics');
 
 console.log(`\n${ok} passed, ${bad} failed`); if (bad) process.exit(1);

@@ -8,6 +8,9 @@ export const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 export const KEEP_DAYS = 90;
 export const MAX_BODY = 4096;
 
+/** Live site → "usage"; deploy previews and branch deploys → "usage-preview", so testing never mixes with real numbers. */
+export const storeName = (context) => (context && context.deploy && context.deploy.context === 'production' ? 'usage' : 'usage-preview');
+
 const str = (v, n = 60) => (typeof v === 'string' ? v.replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, n) : '');
 const num = (v, lo, hi) => { const x = Number(v); return Number.isFinite(x) && x >= lo && x <= hi ? x : null; };
 const oneOf = (v, list) => (list.includes(v) ? v : '');
