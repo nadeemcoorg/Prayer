@@ -3,7 +3,7 @@
 > **For a new Claude session / new developer:** read this file first, then `README.md`.
 > Repository: **`nadeemcoorg/Prayer`** on GitHub (default branch `main`, deployed by Netlify).
 > It records what the app is, how it is built, every revision so far, the decisions the owner made (and why), and what is still open.
-> Last updated: **2026-10-06** · Current version: **2.6.1** · Owner: Nadeem Ahmad (GitHub: `nadeemcoorg`)
+> Last updated: **2026-10-06** · Current version: **2.7.0** · Owner: Nadeem Ahmad (GitHub: `nadeemcoorg`)
 
 ---
 
@@ -195,7 +195,7 @@ A single `Index.html` with major bugs found in the first review:
 - **Preview Focus / Night for 30 seconds** (`startViewPreview()`, `viewPreviewAt()`): the dialog is hidden, not closed, so unsaved changes stay; "Preview · ends in 0:29" label with Stop at the top (bottom for Focus C). Stop, Esc or the timeout end it; nothing is saved. Focus tiles and preview show in Mosque mode even with Focus off; Home mode explains where Focus is.
 - No `:has()` selectors (older TV browsers). +6 KB; nothing new runs outside Settings. The owner checked it on the deploy preview.
 
-### v2.6.1: older tablets and browsers (current)
+### v2.6.1: older tablets and browsers
 - Reported on a **Huawei T5 tablet with an old Chrome**: empty band under the cards, top-right buttons touching, an orange box around a tapped button.
 - Full screen / Mosque: `.app` takes the **real visible height** (`--app-h`, measured in `updateLayoutClasses()`), so the card grid reaches the bottom on old engines too.
 - Chrome < 79 (no `min()`/`clamp()`): `fitRootFont()` applies the screen-based text size in code; plain fallback values sit before every other `min()`/`max()`/`clamp()`.
@@ -204,11 +204,17 @@ A single `Index.html` with major bugs found in the first review:
 - Portrait mosque screens: on Fridays "Jumu'ah" + badge wrapped and pushed Isha off the bottom; names stay on one line, slightly smaller.
 - Modern browsers: every measured box identical at 960×552, 1920×1080, 1080×1920, 1366×800 and phone. Deployed before the owner tested the preview on the T5; **check the T5 on the live site**.
 
+### v2.7.0: anonymous usage statistics (with consent), centred top-right buttons (current)
+- **Usage statistics, only after "Allow"**: each configured screen asks once ("Help improve Prayer Times?", with a "What is sent?" list); Settings → Backup & Help can change it, set an optional screen name and shows the device number (`PT-XXXX-XXXX`, also in feedback diagnostics). One message a day to `/api/usage`: random device number, city or area rounded to ~10 km, mode, layout, Focus/Night, app version, browser, OS, model, screen size, error count. Never: names, emails, exact location, IP, error text. Device number and screen name live outside the settings, so Export / Import never copies them.
+- Netlify Functions (`netlify/functions/`, logic in `netlify/usage-core.mjs`): `usage`, `usage-stats` (needs **`STATS_PASSWORD`**, set by the owner), `usage-prune` (daily; 90-day retention, monthly totals). Preview links use the `usage-preview` store. Dependency `@netlify/blobs` 8.2.0 (no dependencies of its own). Owner page `/stats.html`.
+- Top-right buttons: icons pinned to the exact centre (older Chrome can't lay out a `<button>` as a grid); hover highlight only on devices that really hover.
+- Tests: smoke 50, usage 20 (`npm test`). The smoke test also fails if `?.` or `??` appear in the app (old Chrome stops on them).
+
 ---
 
 ## 6. Testing
 
-- **Automated:** `node tests/smoke.test.cjs`. Expected: **45 passed, 0 failed, errors: none**. It covers:
+- **Automated:** `node tests/smoke.test.cjs`. Expected: **50 passed, 0 failed, errors: none**, plus `node tests/usage.test.mjs` **20 passed** (both: `npm test`). It covers:
   - location lookup and on-device times; Fajr/Ishraq/Dhuhr/Isha "now/next" rules; Makruh windows, including Zawal;
   - Islamic midnight; Hijri date; iPhone install state; the adhan fires once;
   - diagnostics content; offline feedback outbox; Netlify form encoding;
@@ -252,7 +258,7 @@ A single `Index.html` with major bugs found in the first review:
 4. ~~**Zawal** as a third Makruh window~~: done in v2.4.0 (Hanafi default).
 5. Phase 2 idea (only if needed): admin uploads that reach all screens instantly (Supabase or Firebase plus an admin page).
 6. **Small bug (from before v2.5.0):** in 12-hour mode the Ishraq line on the Sunrise card reads "5:59 الشروقAM" (the AM lands in the wrong place inside the Arabic text).
-7. **Usage statistics** (branch `claude/usage-stats`): consent-based daily message → Netlify Function → Netlify Blobs; owner page `/stats.html`. **Before it works live, set `STATS_PASSWORD`** in Netlify environment variables. Only dependency: `@netlify/blobs` 8.2.0, pinned because it has no dependencies of its own (11.x pulls in 29 MB including a native binary, the kind of package that broke the 2.1.1 build).
+7. ~~**Usage statistics**~~: released in v2.7.0 (owner set `STATS_PASSWORD` on 2026-11-27). consent-based daily message → Netlify Function → Netlify Blobs; owner page `/stats.html`. **Before it works live, set `STATS_PASSWORD`** in Netlify environment variables. Only dependency: `@netlify/blobs` 8.2.0, pinned because it has no dependencies of its own (11.x pulls in 29 MB including a native binary, the kind of package that broke the 2.1.1 build).
 
 ---
 
